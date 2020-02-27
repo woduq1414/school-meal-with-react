@@ -33,7 +33,4 @@ def not_found(error):
     return render_template('index.html')
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        if sys.argv[1] == 'test':
-            app.debug = True
-    app.run()
+    app.run(debug=True, host='127.0.0.1', port=5000)
