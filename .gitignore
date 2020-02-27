@@ -111,7 +111,7 @@ node_modules
 .grunt
 _SpecRunner.html
 __benchmarks__
-static/dist
+# static/dist
 # static/index.html
 build/
 remote-repo/
