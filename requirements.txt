@@ -1,4 +1,4 @@
-aniso8601==6.0.0
+pianiso8601==6.0.0
 bcrypt==3.1.6
 cffi==1.12.2
 Click==7.0
@@ -18,3 +18,4 @@ six==1.12.0
 SQLAlchemy==1.3.13
 Werkzeug==0.15.2
 WTForms==2.2.1
+gunicorn==20.0.4
