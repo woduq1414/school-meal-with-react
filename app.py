@@ -4,9 +4,9 @@ from api.api import GetMealByMonthFromNeis, GetMealByWeekWithDetailFromNeis, Get
 from flask import render_template, g, Flask
 from flask_restful import Resource, Api, reqparse
 
-# app = Flask(__name__, static_url_path='', static_folder='./static', template_folder='./static')
+app = Flask(__name__, static_url_path='', static_folder='./static', template_folder='./static')
 # app = Flask(__name__, static_folder='./static', template_folder='./static')
-app = Flask(__name__)
+#app = Flask(__name__)
 api = Api(app)
 
 
@@ -30,6 +30,24 @@ def catch_all(path):
 @app.errorhandler(404)
 def not_found(error):
     print("SDF")
+    import os
+
+    import os.path
+
+    myPath = './'
+
+    files = list()
+
+    for a in os.listdir(myPath):
+
+        fullPath = os.path.join(myPath, a)  # 파일일 수도 있고 디렉토리일 수도 있습니다.
+
+        if os.path.isfile(fullPath):  # 파일이라면
+
+            files.append(fullPath)
+
+    print(files)
+
     return render_template('index.html')
 
 if __name__ == '__main__':
