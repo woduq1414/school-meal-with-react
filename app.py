@@ -34,7 +34,7 @@ def not_found(error):
 
     import os.path
 
-    myPath = './'
+    myPath = './static'
 
     files = list()
 
