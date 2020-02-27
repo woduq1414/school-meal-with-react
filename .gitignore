@@ -112,7 +112,7 @@ node_modules
 _SpecRunner.html
 __benchmarks__
 static/dist
-static/index.html
+# static/index.html
 build/
 remote-repo/
 coverage/
