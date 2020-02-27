@@ -31,22 +31,15 @@ def catch_all(path):
 def not_found(error):
     print("SDF")
     import os
+    workDIr = os.path.abspath('.')
+    for dirpath, dirnames, filenames in os.walk(workDIr):
+        print(dirpath)
 
-    import os.path
-
-    myPath = './static'
-
-    files = list()
-
-    for a in os.listdir(myPath):
-
-        fullPath = os.path.join(myPath, a)  # 파일일 수도 있고 디렉토리일 수도 있습니다.
-
-        if os.path.isfile(fullPath):  # 파일이라면
-
-            files.append(fullPath)
-
-    print(files)
+        # for dirname in dirnames:
+        #     print("\t", dirname)
+        #
+        # for filename in filenames:
+        #     print("\t", filename)
 
     return render_template('index.html')
 
