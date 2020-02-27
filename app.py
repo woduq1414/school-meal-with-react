@@ -4,7 +4,8 @@ from api.api import GetMealByMonthFromNeis, GetMealByWeekWithDetailFromNeis, Get
 from flask import render_template, g, Flask
 from flask_restful import Resource, Api, reqparse
 
-app = Flask(__name__, static_url_path='', static_folder='./static', template_folder='./static')
+# app = Flask(__name__, static_url_path='', static_folder='./static', template_folder='./static')
+app = Flask(__name__, static_folder='./static', template_folder='./static')
 api = Api(app)
 
 
