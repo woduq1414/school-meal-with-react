@@ -26,6 +26,15 @@ def get_region_code(school_code):
 
 class SearchSchoolName(Resource):
     def get(self, school_name):
+        parser = reqparse.RequestParser()
+        parser.add_argument('limit', type=int)
+        args = parser.parse_args()
+
+        limit = args["limit"]
+
+        if limit is None:
+            limit = 100
+
         with requests.Session() as s:
             headers = {
                 "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
@@ -48,7 +57,12 @@ class SearchSchoolName(Resource):
             result = []
             # return data
             for school_type, schools in data.items():
+
                 for school in schools:
+
+                    if len(result) >= limit:
+                        break;
+
                     if school_type == "schoolList02":
                         type = "초등"
                     elif school_type == "schoolList03":
@@ -58,12 +72,13 @@ class SearchSchoolName(Resource):
                     result.append({
                         "schoolType": type,
                         "schoolRegion": school['LCTN_NM'],
-                        "schoolAddress": school['SCHUL_RDNMA'],
+                        "schoolAddress": school['SCHUL_RDNMA'] if "SCHUL_RDNMA" in school else "주소를 찾을 수 없습니다.",
                         "schoolName": school['SCHUL_NM'],
                         "schoolCode": school["SCHUL_CODE"]
                     })
+
             if result:
-                return result, 200
+                return result[:limit], 200
             else:
                 return {"message": "학교를 찾을 수 없음"}, 404
 

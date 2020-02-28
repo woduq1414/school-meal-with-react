@@ -3,12 +3,15 @@ from api.api import GetMealByMonthFromNeis, GetMealByWeekWithDetailFromNeis, Get
     SearchSchoolName
 from flask import render_template, g, Flask
 from flask_restful import Resource, Api, reqparse
+from flask_cors import CORS
 
 app = Flask(__name__, static_url_path='', static_folder='./static', template_folder='./static')
 # app = Flask(__name__, static_folder='./static', template_folder='./static')
 #app = Flask(__name__)
-api = Api(app)
 
+
+api = Api(app)
+CORS(app)
 
 api.add_resource(SearchSchoolName, '/api/schools/<school_name>')
 api.add_resource(GetMealByMonthFromNeis, '/api/meals/<school_code>/month/<target_date>')

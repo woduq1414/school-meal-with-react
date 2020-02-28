@@ -1,19 +1,12 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import Favicon from 'react-favicon';
+import React from "react";
+import ReactDOM from "react-dom";
+import "./index.css";
+import Client from "./Client";
+import * as serviceWorker from "./serviceWorker";
 
-import './index.scss';
-import App from './App';
-import $ from 'jquery';
+ReactDOM.render(<Client />, document.getElementById("root"));
 
-//favicon urls
-import WebFavicon from './images/favicons/favicon.ico';
-
-ReactDOM.render(
-    <div>
-        <Favicon url={WebFavicon} />
-        <App/>
-    </div>,
-    document.getElementById('root')
-);
-
+// If you want your app to work offline and load faster, you can change
+// unregister() to register() below. Note this comes with some pitfalls.
+// Learn more about service workers: https://bit.ly/CRA-PWA
+serviceWorker.unregister();
