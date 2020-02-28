@@ -7,7 +7,7 @@ const path = require("path");
 
 const ROOT_PATH = path.resolve(__dirname, '../');
 const APP_PATH = path.resolve(ROOT_PATH, 'myapp/src');
-const BUILD_PATH = path.resolve(ROOT_PATH, 'dist');
+const BUILD_PATH = path.resolve(ROOT_PATH, '/dist');
 
 module.exports = {
     entry: {
@@ -16,7 +16,7 @@ module.exports = {
     },
     output: {
         path: BUILD_PATH,
-        publicPath: 'dist/',
+        publicPath: '/dist/',
         filename: "js/[name].js"
     },
     module: {

@@ -169,7 +169,8 @@ class GetMealByWeekWithDetailFromNeis(Resource):
                         week[day] = {"date": first_date + i, "meal": list(map(remove_allergy, date[:-1])), "detail": {}}
                         for ingredient in week_detail_list:
                             week[day]["detail"][ingredient['gb']] = float(ingredient["dy" + str(3 + i)])
-
+                else:
+                    week[day] = {"date": first_date + i, "meal": []}
             meals.append(week)
 
             result = {
@@ -200,7 +201,8 @@ class GetMealByDayWithDetailFromNeis(Resource):
                 week_detail_list = data["resultSVO"]['dietNtrList']
             except:
                 return {"message": "학교를 찾을 수 없거나, 날짜가 잘못됨."}, 404
-            meals = []
+
+            # return data
 
             first_date = int(target_date[6:8]) - (datetime.date(int(target_date[0:4]), int(target_date[4:6]),
                                                                 int(target_date[6:8])).isoweekday() % 7)
@@ -210,14 +212,18 @@ class GetMealByDayWithDetailFromNeis(Resource):
                 if first_date + i == int(target_date[6:8]):
                     temp = week_diet_list[day]
                     if temp is not None:
+
+
                         date = temp.split("<br />")
                         if date[0] is not None:
-                            week[day] = {"date": first_date + i, "meal": list(map(remove_allergy, date[:-1])),
+                            meals = {"date": first_date + i, "meal": list(map(remove_allergy, date[:-1])),
                                          "detail": {}}
                             for ingredient in week_detail_list:
-                                week[day]["detail"][ingredient['gb']] = float(ingredient["dy" + str(3 + i)])
+                                meals["detail"][ingredient['gb']] = float(ingredient["dy" + str(3 + i)])
+                    else:
+                        meals = {"date": first_date + i, "meal": []}
+            # meals = week["the"]
 
-            meals.append(week)
 
             result = {
                 'result': {

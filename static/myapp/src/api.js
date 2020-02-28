@@ -13,7 +13,7 @@ import axios from "axios";
 // };
 
 const Kakao = axios.create({
-    baseURL: window.location.hostname == "127.0.0.1" ? "http://127.0.0.1:5000/api" : "https://school-meal-with-react.herokuapp.com/api", // 공통 요청 경로를 지정해준다.  process.env.baseURL ||
+    baseURL: window.location.hostname == "127.0.0.1" || "localhost" ? "http://127.0.0.1:5000/api" : "https://school-meal-with-react.herokuapp.com/api", // 공통 요청 경로를 지정해준다.  process.env.baseURL ||
 });
 
 // search blog api
@@ -21,35 +21,50 @@ export const blogSearch = params => {
     console.log()
     return Kakao.get(`/schools/${params}`)
         .then((response) => {
-            // Success 🎉
-            // console.log(response.data);
+
             return response;
         })
         .catch((error) => {
             // Error 😨
             if (error.response) {
-                /*
-                 * The request was made and the server responded with a
-                 * status code that falls out of the range of 2xx
-                 */
-                // console.log(error.response.data);
-                // console.log(error.response.status);
-                // console.log(error.response.headers);
+
                 return error.response
 
 
             } else if (error.request) {
-                /*
-                 * The request was made but no response was received, `error.request`
-                 * is an instance of XMLHttpRequest in the browser and an instance
-                 * of http.ClientRequest in Node.js
-                 */
+
                 console.log(error.request);
             } else {
-                // Something happened in setting up the request and triggered an Error
+
                 console.log('Error', error.message);
             }
-            // console.log(error.config);
+        });
+    ;
+
+};
+
+
+export const getMeal = params => {
+    console.log(`/meals/${params.schoolCode}/day/${params.date}`)
+    return Kakao.get(`/meals/${params.schoolCode}/day/${params.date}`)
+        .then((response) => {
+
+            return response;
+        })
+        .catch((error) => {
+            // Error 😨
+            if (error.response) {
+
+                return error.response
+
+
+            } else if (error.request) {
+
+                console.log(error.request);
+            } else {
+
+                console.log('Error', error.message);
+            }
         });
     ;
 

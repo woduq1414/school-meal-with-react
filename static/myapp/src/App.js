@@ -1,15 +1,72 @@
 import React, {useEffect, useState} from "react";
 import {blogSearch} from "./api";
 
-import "./App.css";
+import styled, { createGlobalStyle }  from 'styled-components';
+
+import './App.css'
+
 import Item from "./Item";
 
 import {withRouter} from "react-router-dom";
 
+// const GlobalStyle = createGlobalStyle`
+//   @import url("https://fonts.googleapis.com/css?family=Noto+Sans+KR&display=swap");
+//
+// * {
+//   font-family: "Noto Sans KR", sans-serif;
+//   box-sizing: border-box;
+//   padding: 0;
+//   margin: 0;
+// }
+//
+// html,
+// body {
+//   height: 100%;
+// }
+// `;
+
+
+
+
+const InputSearch = styled.input`
+
+  font-family: "Noto Sans KR", sans-serif;
+  font-size: 18px;
+  border: 0;
+  border-bottom: 1px solid #dddddd;
+  width: 80%;
+  padding: 20px;
+  display: block;
+  transition: border 0.3s;
+  &:focus {
+     outline: none;
+    border-bottom: 1px solid #0675f3;
+  }
+`
+
+const Container = styled.div`
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 50px;
+`
+
+const Schools = styled.ul`
+  display: grid;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  width: 80%;
+  grid-gap: 10px;
+  cursor:pointer;
+`
+
+
 const App = props => {
     const {params} = props.match;
     const keyword = params.keyword || "";
-
+    console.log(props)
     const [blogs, setBlogs] = useState([]);
     const [text, setText] = useState(keyword);
     // const [query, setQuery] = useState(keyword);
@@ -60,18 +117,20 @@ const App = props => {
     };
 
     return (
-        <div className="container">
-            <input
+
+        <Container>
+
+
+            <InputSearch
                 type="search"
                 placeholder="검색어를 입력 하세요..."
                 name="query"
-                className="input_search"
                 onKeyDown={onEnter} // enter
                 onChange={onTextUpdate} // change
                 value={text} // view
             />
 
-            <ul>
+            <Schools>
                 {blogs.map((blog, index) => (
                     <Item
                         key={index}
@@ -82,8 +141,8 @@ const App = props => {
                         schoolCode={blog.schoolCode}
                     />
                 ))}
-            </ul>
-        </div>
+            </Schools>
+        </Container>
     );
 };
 //aa

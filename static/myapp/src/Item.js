@@ -1,32 +1,48 @@
 import React from "react";
 
+import styled from 'styled-components';
+
+import {withRouter} from "react-router-dom";
+
+const School = styled.li`
+  list-style-type : none;
+  border : 0.8px solid #eee;
+  padding: 5px 20px;
+`
+
+const Upper = styled.dl`
+  margin-bottom : 10px;
+`
+
+const Under = styled.dl`
+`
+
+const SchoolName = styled.span`
+vertical-align:middle;
+`
+const SchoolCode = styled.span`
+vertical-align:middle;
+color : gray;
+font-size : 0.7em;
+`
+
+
 const Item = props => {
-    // return (
-    //   <li>
-    //     <dl>
-    //       <dt>
-    //         <img src={props.thumbnail} alt={props.thumbnail} />
-    //       </dt>
-    //       <dd>
-    //         <h3 dangerouslySetInnerHTML={{ __html: props.title }} />
-    //         <p>{props.blogname}</p>
-    //         <article dangerouslySetInnerHTML={{ __html: props.contents }} />
-    //         <a href={props.url} target="_blank">
-    //           링크 바로가기
-    //         </a>
-    //       </dd>
-    //     </dl>
-    //   </li>
-    // );
+
+    const onClick = e => {
+        props.history.push(`/meals/${props.schoolCode}/${props.schoolName}`, {"aa" : "bb"});
+    };
+
+
     return (
-        <li className={"school"}>
-            <dl className={"upper"}>
-                <span className={"schoolName"}>{props.schoolName} · </span>
-                <span className={"schoolCode"}>{props.schoolCode}</span>
-            </dl>
-            <dl className={"under"}>{props.schoolAddress}</dl>
-        </li>
+        <School onClick={onClick}>
+            <Upper>
+                <SchoolName>{props.schoolName} · </SchoolName>
+                <SchoolCode>{props.schoolCode}</SchoolCode>
+            </Upper>
+            <Under>{props.schoolAddress}</Under>
+        </School>
     )
 };
 
-export default Item;
+export default withRouter(Item);
