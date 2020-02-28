@@ -13,11 +13,12 @@ import axios from "axios";
 // };
 
 const Kakao = axios.create({
-    baseURL: process.env.baseURL || "http://127.0.0.1:5000/api", // 공통 요청 경로를 지정해준다.
+    baseURL: window.location.hostname == "127.0.0.1" ? "http://127.0.0.1:5000/api" : "https://school-meal-with-react.herokuapp.com/api", // 공통 요청 경로를 지정해준다.  process.env.baseURL ||
 });
 
 // search blog api
 export const blogSearch = params => {
+    console.log()
     return Kakao.get(`/schools/${params}`)
         .then((response) => {
             // Success 🎉
