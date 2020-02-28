@@ -13,7 +13,7 @@ import axios from "axios";
 // };
 
 const Kakao = axios.create({
-    baseURL: "http://127.0.0.1:5000/api", // 공통 요청 경로를 지정해준다.
+    baseURL: process.env.baseURL || "http://127.0.0.1:5000/api", // 공통 요청 경로를 지정해준다.
 });
 
 // search blog api
