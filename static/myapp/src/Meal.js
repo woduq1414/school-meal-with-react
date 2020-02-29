@@ -241,7 +241,7 @@ const Meal = (props) => {
                         <React.Fragment>
                             {!isLoading &&
                             <div>
-                                급식이 없어요 ㅠ
+                                급식을 찾을 수 없어요 ㅠ
                             </div>
                             }
                         </React.Fragment>
@@ -249,11 +249,7 @@ const Meal = (props) => {
                     )
 
                 }
-                {/*{!meals.meal && !isLoading &&*/}
-                {/*    <div>*/}
-                {/*        급식 어디갔찌*/}
-                {/*    </div>*/}
-                {/*}*/}
+
 
 
             </MealData>
@@ -262,5 +258,5 @@ const Meal = (props) => {
         </Container>
     );
 };
-//aa
+//aaasad
 export default withRouter(Meal);
