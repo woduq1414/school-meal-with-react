@@ -70,7 +70,9 @@ const Meal = (props) => {
 
     const {params} = props.match;
     console.log(props)
-    const targetDate = "2019-12-19"
+
+    let targetDate = "2019-12-19"
+
     const [date, setDate] = useState(targetDate);
 
     const [meals, setMeals] = useState([]);
@@ -100,13 +102,13 @@ const Meal = (props) => {
         let temp = new Date(date);
         temp.setDate(temp.getDate() + parseInt(-1));
         temp = temp.toISOString().substring(0, 10);
-        //setDate(temp)
+        setDate(temp)
     }
     const nextDate = () => {
         let temp = new Date(date);
         temp.setDate(temp.getDate() + parseInt(1));
         temp = temp.toISOString().substring(0, 10);
-        //setDate(temp)
+        setDate(temp)
     }
 
 
@@ -157,7 +159,8 @@ const Meal = (props) => {
                 type="date"
                 name="date"
                 onChange={onDateUpdate} // change
-                defaultValue="2019-12-19" // view
+
+                value={date}
             />
 
             <NextButton onClick={nextDate}>▷</NextButton>

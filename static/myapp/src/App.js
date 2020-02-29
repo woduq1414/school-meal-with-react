@@ -5,6 +5,7 @@ import styled, { createGlobalStyle }  from 'styled-components';
 
 import './App.css'
 
+import Loading from "./Loading";
 import Item from "./Item";
 
 import {withRouter} from "react-router-dom";
@@ -68,6 +69,7 @@ const App = props => {
     const keyword = params.keyword || "";
     console.log(props)
     const [blogs, setBlogs] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [text, setText] = useState(keyword);
     // const [query, setQuery] = useState(keyword);
 
@@ -99,8 +101,11 @@ const App = props => {
         //   page: 1, // 페이지번호
         //   size: 10 // 한 페이지에 보여 질 문서의 개수
         // };
+        setBlogs([])
+        setIsLoading(true)
 
         const response = await blogSearch(query);
+        setIsLoading(false)
         console.log(response)
         if(response.status !== 404){
             let data = response.data;
@@ -112,6 +117,7 @@ const App = props => {
         }else{
             setBlogs([])
         }
+
 
 
     };
@@ -131,6 +137,7 @@ const App = props => {
             />
 
             <Schools>
+                {isLoading ? <Loading/> : ""}
                 {blogs.map((blog, index) => (
                     <Item
                         key={index}
