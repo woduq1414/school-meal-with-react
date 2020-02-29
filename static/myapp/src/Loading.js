@@ -25,6 +25,7 @@ class Loading extends React.Component {
   }
 
   render() {
+
     return (
       <div className="sweet-loading">
         <SyncLoader
@@ -32,7 +33,7 @@ class Loading extends React.Component {
           size={15}
           //size={"150px"} this also works
           color={"#50E3C2"}
-          loading={this.state.loading}
+          loading={this.props.loading}
         />
       </div>
     );

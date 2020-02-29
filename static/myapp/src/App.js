@@ -10,6 +10,8 @@ import Item from "./Item";
 
 import {withRouter} from "react-router-dom";
 
+import useDebounce from "./useDebounce";
+
 // const GlobalStyle = createGlobalStyle`
 //   @import url("https://fonts.googleapis.com/css?family=Noto+Sans+KR&display=swap");
 //
@@ -67,13 +69,15 @@ const Schools = styled.ul`
 const App = props => {
     const {params} = props.match;
     const keyword = params.keyword || "";
-    console.log(props)
+
     const [blogs, setBlogs] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(keyword);
     const [text, setText] = useState(keyword);
+
     // const [query, setQuery] = useState(keyword);
 
     useEffect(() => {
+        console.log("SFD")
         if (keyword.length > 0) {
             blogSearchHttpHandler(keyword, true);
         } else {
@@ -128,7 +132,7 @@ const App = props => {
 
 
             <InputSearch
-                type="search"
+                type="text"
                 placeholder="검색어를 입력 하세요..."
                 name="query"
                 onKeyDown={onEnter} // enter
@@ -137,7 +141,12 @@ const App = props => {
             />
 
             <Schools>
-                {isLoading ? <Loading/> : ""}
+                {/*{isLoading ? <Loading loading={isLoading}/> : ""}*/}
+                <Loading loading={isLoading}/>
+                {blogs.length == 100 &&
+                    <div>※ 해당 결과가 너무 많아 가나다 순 상위 100개만 보여집니다.</div>
+                }
+
                 {blogs.map((blog, index) => (
                     <Item
                         key={index}

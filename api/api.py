@@ -4,8 +4,6 @@ import requests, json
 import datetime
 import re
 
-
-
 """
 http://127.0.0.1:5000/schools/디지털
 http://127.0.0.1:5000/api/meals/J100000855/month/20190908
@@ -20,8 +18,10 @@ def remove_allergy(str):
 
 def get_region_code(school_code):
     t = school_code[0]
-    return {"B": "sen", "C": "pen", "D": "dge", "E": "ice", "F": "gen", "G": "dje", "H": "use", "I": "sje", "J": "goe",
-            "K": "kwe", "M": "cbe", "N": "cne", "P": "jbe", "Q": "jne", "R": "gbe", "S": "gne", "T": "jje"}[t]
+    return {"B": "sen.go", "C": "pen.go", "D": "dge.go", "E": "ice.go", "F": "gen.go", "G": "dje.go", "H": "use.go",
+            "I": "sje.go", "J": "goe.go",
+            "K": "kwe.go", "M": "cbe.go", "N": "cne.go", "P": "jbe.go", "Q": "jne.go", "R": "gbe", "S": "gne.go",
+            "T": "jje.go"}[t]
 
 
 class SearchSchoolName(Resource):
@@ -92,7 +92,7 @@ class GetMealByMonthFromNeis(Resource):
     def get(self, school_code, target_date):
 
         with requests.Session() as s:
-            first_page = s.get('https://stu.{}.go.kr/edusys.jsp?page=sts_m40000'.format(get_region_code(school_code)))
+            first_page = s.get('https://stu.{}.kr/edusys.jsp?page=sts_m40000'.format(get_region_code(school_code)))
 
             headers = {
                 "Content-Type": "application/json"
@@ -100,7 +100,7 @@ class GetMealByMonthFromNeis(Resource):
             payload = {"ay": target_date[0:4], "mm": target_date[4:6], "schulCode": school_code,
                        "schulKndScCode": "02", "schulCrseScCode": "2"}
             payload = json.dumps(payload)
-            meal_page = s.post('https://stu.{}.go.kr/sts_sci_md00_001.ws'.format(get_region_code(school_code)),
+            meal_page = s.post('https://stu.{}.kr/sts_sci_md00_001.ws'.format(get_region_code(school_code)),
                                data=payload, headers=headers,
                                cookies=first_page.cookies)
 
@@ -135,7 +135,7 @@ class GetMealByMonthFromNeis(Resource):
 class GetMealByWeekWithDetailFromNeis(Resource):
     def get(self, school_code, target_date):
         with requests.Session() as s:
-            first_page = s.get('https://stu.{}.go.kr/edusys.jsp?page=sts_m40000'.format(get_region_code(school_code)))
+            first_page = s.get('https://stu.{}.kr/edusys.jsp?page=sts_m40000'.format(get_region_code(school_code)))
 
             headers = {
                 "Content-Type": "application/json"
@@ -143,7 +143,7 @@ class GetMealByWeekWithDetailFromNeis(Resource):
             payload = {"schYmd": target_date, "schulCode": school_code,
                        "schulKndScCode": "04", "schulCrseScCode": "4", "schMmealScCode": "2"}
             payload = json.dumps(payload)
-            meal_page = s.post('https://stu.{}.go.kr/sts_sci_md01_001.ws'.format(get_region_code(school_code)),
+            meal_page = s.post('https://stu.{}.kr/sts_sci_md01_001.ws'.format(get_region_code(school_code)),
                                data=payload, headers=headers,
                                cookies=first_page.cookies)
 
@@ -185,14 +185,14 @@ class GetMealByWeekWithDetailFromNeis(Resource):
 class GetMealByDayWithDetailFromNeis(Resource):
     def get(self, school_code, target_date):
         with requests.Session() as s:
-            first_page = s.get('https://stu.{}.go.kr/edusys.jsp?page=sts_m40000'.format(get_region_code(school_code)))
+            first_page = s.get('https://stu.{}.kr/edusys.jsp?page=sts_m42310'.format(get_region_code(school_code)))
             headers = {
                 "Content-Type": "application/json"
             }
             payload = {"schYmd": target_date, "schulCode": school_code,
                        "schulKndScCode": "04", "schulCrseScCode": "4", "schMmealScCode": "2"}
             payload = json.dumps(payload)
-            meal_page = s.post('https://stu.{}.go.kr/sts_sci_md01_001.ws'.format(get_region_code(school_code)),
+            meal_page = s.post('https://stu.{}.kr/sts_sci_md01_001.ws'.format(get_region_code(school_code)),
                                data=payload, headers=headers)
             data = meal_page.text
             data = json.loads(data, encoding="utf-8")
@@ -213,17 +213,15 @@ class GetMealByDayWithDetailFromNeis(Resource):
                     temp = week_diet_list[day]
                     if temp is not None:
 
-
                         date = temp.split("<br />")
                         if date[0] is not None:
                             meals = {"date": first_date + i, "meal": list(map(remove_allergy, date[:-1])),
-                                         "detail": {}}
+                                     "detail": {}}
                             for ingredient in week_detail_list:
                                 meals["detail"][ingredient['gb']] = float(ingredient["dy" + str(3 + i)])
                     else:
                         meals = {"date": first_date + i, "meal": []}
             # meals = week["the"]
-
 
             result = {
                 'result': {
