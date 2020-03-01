@@ -13,7 +13,7 @@ import axios from "axios";
 // };
 
 const Kakao = axios.create({
-    baseURL: window.location.hostname == "127.0.0.1" || "localhost" ? "http://127.0.0.1:5000/api" : "https://school-meal-with-react.herokuapp.com/api", // 공통 요청 경로를 지정해준다.  process.env.baseURL ||
+    baseURL: (window.location.hostname == "127.0.0.1" ||  window.location.hostname == "localhost") ? "http://127.0.0.1:5000/api" : "https://school-meal-with-react.herokuapp.com/api", // 공통 요청 경로를 지정해준다.  process.env.baseURL ||
 });
 
 // search blog api

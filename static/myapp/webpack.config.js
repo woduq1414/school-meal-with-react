@@ -107,6 +107,7 @@ module.exports = {
         ]
     },
     devServer: {
+        disableHostCheck: true,
         contentBase: ROOT_PATH,
         historyApiFallback: true,
         overlay: {

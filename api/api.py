@@ -54,6 +54,8 @@ class SearchSchoolName(Resource):
 
             data = school_page.text
             data = json.loads(data, encoding="utf-8")
+
+
             result = []
             # return data
             for school_type, schools in data.items():
@@ -106,6 +108,8 @@ class GetMealByMonthFromNeis(Resource):
 
             data = meal_page.text
             data = json.loads(data, encoding="utf-8")
+
+
 
         mth_diet_list = data["resultSVO"]['mthDietList']
         if not mth_diet_list:
