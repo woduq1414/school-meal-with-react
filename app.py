@@ -1,23 +1,30 @@
 import sys
 from api.api import GetMealByMonthFromNeis, GetMealByWeekWithDetailFromNeis, GetMealByDayWithDetailFromNeis, \
-    SearchSchoolName
+    SearchSchoolName, DB, GetSchoolNameWithSchoolCode
+
+from api.api import app, api, db
+
+
+
+
 from flask import render_template, g, Flask
 from flask_restful import Resource, Api, reqparse
 from flask_cors import CORS
 
-app = Flask(__name__, static_url_path='', static_folder='./static', template_folder='./static')
+
 # app = Flask(__name__, static_folder='./static', template_folder='./static')
 #app = Flask(__name__)
 
 
-api = Api(app)
+
 CORS(app)
 
-api.add_resource(SearchSchoolName, '/api/schools/<school_name>')
+api.add_resource(SearchSchoolName, '/api/schools/name/<school_name>')
+api.add_resource(GetSchoolNameWithSchoolCode, '/api/schools/code/<school_code>')
 api.add_resource(GetMealByMonthFromNeis, '/api/meals/<school_code>/month/<target_date>')
 api.add_resource(GetMealByWeekWithDetailFromNeis, '/api/meals/<school_code>/week/<target_date>')
 api.add_resource(GetMealByDayWithDetailFromNeis, '/api/meals/<school_code>/day/<target_date>')
-
+api.add_resource(DB, '/api/db')
 
 
 

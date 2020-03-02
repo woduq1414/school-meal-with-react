@@ -19,7 +19,7 @@ const Kakao = axios.create({
 // search blog api
 export const blogSearch = params => {
     console.log()
-    return Kakao.get(`/schools/${params}`)
+    return Kakao.get(`/schools/name/${params}`)
         .then((response) => {
 
             return response;

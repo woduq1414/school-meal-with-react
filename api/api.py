@@ -3,6 +3,43 @@ from flask_restful import Resource, Api, reqparse
 import requests, json
 import datetime
 import re
+import sqlalchemy
+import numpy as np
+import itertools
+from celery import Celery
+from threading import Thread
+import asyncio
+
+app = Flask(__name__, static_url_path='', static_folder='../static', template_folder='../static')
+app.config['CELERY_BROKER_URL'] = "redis://localhost:6379"
+
+
+api = Api(app)
+
+from celery import Celery
+
+
+def make_celery(app):
+    celery = Celery(app.import_name, backend="redis://localhost:6379",
+                    broker="redis://localhost:6379")
+    celery.conf.update(app.config)
+    TaskBase = celery.Task
+
+    class ContextTask(TaskBase):
+        abstract = True
+
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+
+    celery.Task = ContextTask
+    return celery
+
+
+celery = make_celery(app)
+
+from api.db import *
+from api.model import *
 
 """
 http://127.0.0.1:5000/schools/디지털
@@ -22,6 +59,48 @@ def get_region_code(school_code):
             "I": "sje.go", "J": "goe.go",
             "K": "kwe.go", "M": "cbe.go", "N": "cne.go", "P": "jbe.go", "Q": "jne.go", "R": "gbe", "S": "gne.go",
             "T": "jje.go"}[t]
+
+
+class DB(Resource):
+    def get(self):
+
+        # @celery.task()
+        # def add_together(a, b):
+        #     import time
+        #     time.sleep(5)
+        #     print(a + b)
+        # add_together(3,5)
+
+        def do_work(a,b):
+            # do something that takes a long time
+            import time
+            time.sleep(3)
+            print(a+b)
+
+
+        thread = Thread(target=do_work, kwargs={'a': 3, 'b': 5})
+        thread.start()
+        return "hello"
+    # def get(self, postSeq):
+    #     try:
+    #         post = Board.query.filter_by(postSeq=postSeq).one()
+    #
+    #
+    #     except sqlalchemy.orm.exc.NoResultFound:
+    #         return {"message": "존재하지 않는 게시글 입니다."}, 404
+    #
+    #     post.hit = post.hit + 1
+    #     db.session.commit()
+    #     return {
+    #                "data": {
+    #                    "postSeq": post.postSeq,
+    #                    "userId": post.userId,
+    #                    "userName": post.userNickname,
+    #                    "title": post.title,
+    #                    "postDate": str(post.postDate),
+    #                    "hit": post.hit
+    #                }
+    #            }, 200
 
 
 class SearchSchoolName(Resource):
@@ -55,7 +134,6 @@ class SearchSchoolName(Resource):
             data = school_page.text
             data = json.loads(data, encoding="utf-8")
 
-
             result = []
             # return data
             for school_type, schools in data.items():
@@ -80,14 +158,42 @@ class SearchSchoolName(Resource):
                     })
 
             if result:
+                now = datetime.datetime.now()
+                # result[0]['insertDate'] = str(now)
+                result = result[:limit]
+                schools = list()
+
+                schoolCodes = Schools.query.with_entities(Schools.schoolCode).all()
+                schoolCodes = list((itertools.chain.from_iterable(schoolCodes))) # flatten
+
+                for school in result:
+
+                    if school["schoolCode"] not in schoolCodes:
+                        schools.append(Schools(**school, insertDate=now))
+
+                db.session.add_all(schools)
+
+                db.session.commit()
+
+
                 return result[:limit], 200
             else:
                 return {"message": "학교를 찾을 수 없음"}, 404
 
 
-class GetSchoolCode(Resource):
-    def get(self, school_name):
-        pass
+class GetSchoolNameWithSchoolCode(Resource):
+    def get(self, school_code):
+        school = Schools.query.filter_by(schoolCode=school_code).first()
+        if school is not None:
+            return {
+                        "schoolType": school.schoolType,
+                        "schoolRegion": school.schoolRegion,
+                        "schoolAddress": school.schoolAddress,
+                        "schoolName": school.schoolName,
+                        "schoolCode": school.schoolCode
+                    }
+        else:
+            return {"message": "학교를 찾을 수 없음"}, 404
 
 
 class GetMealByMonthFromNeis(Resource):
@@ -108,8 +214,6 @@ class GetMealByMonthFromNeis(Resource):
 
             data = meal_page.text
             data = json.loads(data, encoding="utf-8")
-
-
 
         mth_diet_list = data["resultSVO"]['mthDietList']
         if not mth_diet_list:
