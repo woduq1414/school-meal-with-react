@@ -158,23 +158,28 @@ class SearchSchoolName(Resource):
                     })
 
             if result:
-                now = datetime.datetime.now()
-                # result[0]['insertDate'] = str(now)
-                result = result[:limit]
-                schools = list()
 
-                schoolCodes = Schools.query.with_entities(Schools.schoolCode).all()
-                schoolCodes = list((itertools.chain.from_iterable(schoolCodes))) # flatten
+                def InsertSchoolsDB(result, limit):
+                    now = datetime.datetime.now()
+                    # result[0]['insertDate'] = str(now)
+                    result = result[:limit]
+                    schools = list()
 
-                for school in result:
+                    schoolCodes = Schools.query.with_entities(Schools.schoolCode).all()
+                    schoolCodes = list((itertools.chain.from_iterable(schoolCodes))) # flatten
 
-                    if school["schoolCode"] not in schoolCodes:
-                        schools.append(Schools(**school, insertDate=now))
+                    for school in result:
 
-                db.session.add_all(schools)
+                        if school["schoolCode"] not in schoolCodes:
+                            schools.append(Schools(**school, insertDate=now))
 
-                db.session.commit()
+                        print(school)
+                    db.session.add_all(schools)
 
+                    db.session.commit()
+
+                thread = Thread(target= InsertSchoolsDB, kwargs={'result': result, 'limit': limit})
+                thread.start()
 
                 return result[:limit], 200
             else:
