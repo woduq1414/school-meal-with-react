@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {getMeal} from "./api";
+import {getMeal, getSchoolByCode} from "./api";
 
 //import "./Meal.css";
 
@@ -110,19 +110,47 @@ width:80%
 
 const Meal = (props) => {
 
-    console.log(props)
-
     const {params} = props.match;
-    console.log(props)
+    const [schoolName, setSchoolName] = useState("학교를 불러오는 중..");
+
+    const GetSchoolByCodeHandler = async (query) => {
+
+        const response = await getSchoolByCode(query);
+        console.log(response)
+        if (response.status !== 404) {
+            let data = response.data
+            console.log("!!", data)
+            if (data.schoolName !== params.schoolName) {
+                props.history.push(`/meals/${params.schoolCode}/${data.schoolName}`);
+
+            }
+            setSchoolName(data.schoolName)
+        } else {
+             props.history.push(`/`);
+        }
+
+
+    };
+
+
+    console.log("Params", params)
 
     let targetDate = "2019-12-19"
 
     const [date, setDate] = useState(targetDate);
 
+
+    useEffect(() => {
+        GetSchoolByCodeHandler(params.schoolCode)
+    }, []);
+
+
     const [meals, setMeals] = useState([]);
 
     const [isLoading, setIsLoading] = useState(true);
     const debouncedDate = useDebounce(date, 250);
+
+
     function formatDate(date) {
         return date.replace(/-/gi, "")
     }
@@ -187,6 +215,7 @@ const Meal = (props) => {
 
     };
 
+
     return (
         <Container>
 
@@ -196,7 +225,7 @@ const Meal = (props) => {
             >학교 검색으로..</IndexButton>
             <hr/>
 
-            <SchoolName>{params.schoolName}</SchoolName>
+            <SchoolName>{schoolName}</SchoolName>
 
 
             {date}의 급식
@@ -249,7 +278,6 @@ const Meal = (props) => {
                     )
 
                 }
-
 
 
             </MealData>

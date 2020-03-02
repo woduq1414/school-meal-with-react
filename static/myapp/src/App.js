@@ -143,8 +143,8 @@ const App = props => {
             <Schools>
                 {/*{isLoading ? <Loading loading={isLoading}/> : ""}*/}
                 <Loading loading={isLoading}/>
-                {blogs.length == 100 &&
-                    <div>※ 해당 결과가 너무 많아 가나다 순 상위 100개만 보여집니다.</div>
+                {blogs.length == 30 &&
+                    <div>※ 해당 결과가 너무 많아 가나다 순 상위 30개만 보여집니다.</div>
                 }
 
                 {blogs.map((blog, index) => (

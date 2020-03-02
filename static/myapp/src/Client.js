@@ -10,6 +10,7 @@ const Client = props => {
         <Route path="/search/:keyword" component={App} />
         <Route exact path="/" component={App} />
         <Route exact path="/meals/:schoolCode/:schoolName" component={Meal} />
+        <Route exact path="/meals/:schoolCode" component={Meal} />
       </Switch>
     </BrowserRouter>
   );

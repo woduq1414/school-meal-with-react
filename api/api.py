@@ -6,13 +6,13 @@ import re
 import sqlalchemy
 import numpy as np
 import itertools
-from celery import Celery
+import calendar
 from threading import Thread
+import threading
 import asyncio
 
 app = Flask(__name__, static_url_path='', static_folder='../static', template_folder='../static')
 app.config['CELERY_BROKER_URL'] = "redis://localhost:6379"
-
 
 api = Api(app)
 
@@ -63,7 +63,6 @@ def get_region_code(school_code):
 
 class DB(Resource):
     def get(self):
-
         # @celery.task()
         # def add_together(a, b):
         #     import time
@@ -71,36 +70,15 @@ class DB(Resource):
         #     print(a + b)
         # add_together(3,5)
 
-        def do_work(a,b):
+        def do_work(a, b):
             # do something that takes a long time
             import time
             time.sleep(3)
-            print(a+b)
-
+            print(a + b)
 
         thread = Thread(target=do_work, kwargs={'a': 3, 'b': 5})
         thread.start()
         return "hello"
-    # def get(self, postSeq):
-    #     try:
-    #         post = Board.query.filter_by(postSeq=postSeq).one()
-    #
-    #
-    #     except sqlalchemy.orm.exc.NoResultFound:
-    #         return {"message": "존재하지 않는 게시글 입니다."}, 404
-    #
-    #     post.hit = post.hit + 1
-    #     db.session.commit()
-    #     return {
-    #                "data": {
-    #                    "postSeq": post.postSeq,
-    #                    "userId": post.userId,
-    #                    "userName": post.userNickname,
-    #                    "title": post.title,
-    #                    "postDate": str(post.postDate),
-    #                    "hit": post.hit
-    #                }
-    #            }, 200
 
 
 class SearchSchoolName(Resource):
@@ -112,7 +90,7 @@ class SearchSchoolName(Resource):
         limit = args["limit"]
 
         if limit is None:
-            limit = 100
+            limit = 30
 
         with requests.Session() as s:
             headers = {
@@ -166,7 +144,7 @@ class SearchSchoolName(Resource):
                     schools = list()
 
                     schoolCodes = Schools.query.with_entities(Schools.schoolCode).all()
-                    schoolCodes = list((itertools.chain.from_iterable(schoolCodes))) # flatten
+                    schoolCodes = list((itertools.chain.from_iterable(schoolCodes)))  # flatten
 
                     for school in result:
 
@@ -178,7 +156,7 @@ class SearchSchoolName(Resource):
 
                     db.session.commit()
 
-                thread = Thread(target= InsertSchoolsDB, kwargs={'result': result, 'limit': limit})
+                thread = Thread(target=InsertSchoolsDB, kwargs={'result': result, 'limit': limit})
                 thread.start()
 
                 return result[:limit], 200
@@ -191,12 +169,12 @@ class GetSchoolNameWithSchoolCode(Resource):
         school = Schools.query.filter_by(schoolCode=school_code).first()
         if school is not None:
             return {
-                        "schoolType": school.schoolType,
-                        "schoolRegion": school.schoolRegion,
-                        "schoolAddress": school.schoolAddress,
-                        "schoolName": school.schoolName,
-                        "schoolCode": school.schoolCode
-                    }
+                "schoolType": school.schoolType,
+                "schoolRegion": school.schoolRegion,
+                "schoolAddress": school.schoolAddress,
+                "schoolName": school.schoolName,
+                "schoolCode": school.schoolCode
+            }
         else:
             return {"message": "학교를 찾을 수 없음"}, 404
 
@@ -297,6 +275,34 @@ class GetMealByWeekWithDetailFromNeis(Resource):
 
 class GetMealByDayWithDetailFromNeis(Resource):
     def get(self, school_code, target_date):
+
+        target_year = int(target_date[0:4])
+        target_month = int(target_date[4:6])
+        target_day = int(target_date[6:8])
+        row = Meals.query.filter_by(year=target_year, month=target_month, schoolCode=school_code).first()
+        if row is not None:
+            # result = {
+            #     'result': {
+            #         "status": data["result"]['status']
+            #     },
+            #     "data": meals
+            # }
+            month_data = row.meals["monthData"]
+            for weeks in month_data:
+                for day_data in weeks["weekData"]:
+                    if day_data["day"] == target_day:
+                        print(day_data)
+                        result = {
+                            'result': {
+                                "status": "success"
+                            },
+                            "data": day_data,
+                            "d": True
+                        }
+                        return result
+
+            return {"message": "찾을 수 없음"}, 404
+
         with requests.Session() as s:
             first_page = s.get('https://stu.{}.kr/edusys.jsp?page=sts_m42310'.format(get_region_code(school_code)))
             headers = {
@@ -310,20 +316,26 @@ class GetMealByDayWithDetailFromNeis(Resource):
             data = meal_page.text
             data = json.loads(data, encoding="utf-8")
             try:
-                week_diet_list = data["resultSVO"]['weekDietList'][-1]
+                week_diet_list = data["resultSVO"]['weekDietList'][2]
                 week_detail_list = data["resultSVO"]['dietNtrList']
             except:
-                return {"message": "학교를 찾을 수 없거나, 날짜가 잘못됨."}, 404
+                now = datetime.datetime.now()
+                if now.year > int(target_year) or (now.year == int(target_year) and now.month > int(target_month)):
+                    thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2), target=insert_meals_db,
+                                    kwargs={'school_code': school_code, 'target_year': target_year,
+                                            'target_month': target_month})
+                    thread.start()
 
+                return {"message": "학교를 찾을 수 없거나, 날짜가 잘못됨."}, 404
             # return data
 
             first_date = int(target_date[6:8]) - (datetime.date(int(target_date[0:4]), int(target_date[4:6]),
                                                                 int(target_date[6:8])).isoweekday() % 7)
 
             week = {"weekGb": (first_date - 2) // 7 + 2}
-            for i, day in enumerate(["sun", "mon", "tue", "wed", "the", "fri", "sat"]):
+            for i, dayweek in enumerate(["sun", "mon", "tue", "wed", "the", "fri", "sat"]):
                 if first_date + i == int(target_date[6:8]):
-                    temp = week_diet_list[day]
+                    temp = week_diet_list[dayweek]
                     if temp is not None:
 
                         date = temp.split("<br />")
@@ -333,13 +345,131 @@ class GetMealByDayWithDetailFromNeis(Resource):
                             for ingredient in week_detail_list:
                                 meals["detail"][ingredient['gb']] = float(ingredient["dy" + str(3 + i)])
                     else:
-                        meals = {"date": first_date + i, "meal": []}
+                        meals = {"date": first_date + i, "meal": [], "dayweek": dayweek}
             # meals = week["the"]
 
             result = {
                 'result': {
                     "status": data["result"]['status']
                 },
-                "data": meals
+                "data": meals,
+                "d": False
             }
+
+            thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2), target=insert_meals_db,
+                            kwargs={'school_code': school_code, 'target_year': target_year,
+                                    'target_month': target_month})
+            thread.start()
+
             return json.loads(json.dumps(result, indent=2))
+
+
+def insert_meals_db(school_code, target_year, target_month):
+    running_threads = threading.enumerate()
+    c = 0
+    for thread in running_threads:
+        print(thread.getName())
+        if thread.getName() == school_code + str(target_year).zfill(2) + str(target_month).zfill(2):
+            c = c + 1
+
+    if c >= 2:
+        return
+
+    if Meals.query.filter_by(schoolCode=school_code, year=target_year, month=target_month).count() >= 1:
+        return
+
+    school = Schools.query.filter_by(schoolCode=school_code).first()
+    school_name = ""
+    if school is None:
+        return
+    else:
+        school_name = school.schoolName
+
+    with requests.Session() as s:
+        first_page = s.get('https://stu.{}.kr/edusys.jsp?page=sts_m42310'.format(get_region_code(school_code)))
+        headers = {
+            "Content-Type": "application/json"
+        }
+        month_data = []
+
+        target_day = 1
+        while target_day <= calendar.monthrange(target_year, target_month)[1]:
+
+            week_data = []
+
+            target_date = str(target_year).zfill(4) + str(target_month).zfill(2) + str(target_day).zfill(2)
+            print(target_date)
+            payload = {"schYmd": target_date, "schulCode": school_code,
+                       "schulKndScCode": "04", "schulCrseScCode": "4", "schMmealScCode": "2"}
+            payload = json.dumps(payload)
+            meal_page = s.post('https://stu.{}.kr/sts_sci_md01_001.ws'.format(get_region_code(school_code)),
+                               data=payload, headers=headers)
+            data = meal_page.text
+            data = json.loads(data, encoding="utf-8")
+
+            week_diet_list = {}
+            week_detail_list = {}
+            try:
+                week_diet_list = data["resultSVO"]['weekDietList'][2]
+                week_detail_list = data["resultSVO"]['dietNtrList']
+            except:
+                now = datetime.datetime.now()
+                if now.year > int(target_year) or (now.year == int(target_year) and now.month > int(target_month)):
+
+                    week_diet_list = {
+                        "sun": "",
+                        "mon": "",
+                        "tue": "",
+                        "wed": "",
+                        "the": "",
+                        "fri": "",
+                        "sat": "",
+                    }
+
+                else:
+                    return {"message": "학교를 찾을 수 없거나, 날짜가 잘못됨."}, 404
+
+            # return data
+
+            first_date = int(target_date[6:8]) - (datetime.date(int(target_date[0:4]), int(target_date[4:6]),
+                                                                int(target_date[6:8])).isoweekday() % 7)
+
+            week_data = {"weekGb": (first_date - 2) // 7 + 2, "weekData": []}
+            for i, dayweek in enumerate(["sun", "mon", "tue", "wed", "the", "fri", "sat"]):
+
+                if 1 <= first_date + i <= calendar.monthrange(target_year, target_month)[1]:
+
+                    temp = week_diet_list[dayweek]
+                    if temp is not None:
+
+                        date = temp.split("<br />")
+                        if date[0] is not None:
+                            meals = {"day": first_date + i, "meal": list(map(remove_allergy, date[:-1])),
+                                     "dayweek": dayweek}
+                            if meals["meal"]:
+                                meals["detail"] = {}
+                                for ingredient in week_detail_list:
+                                    meals["detail"][ingredient['gb']] = float(ingredient["dy" + str(3 + i)])
+                            else:
+                                meals["meal"] = None
+                    else:
+                        meals = {"day": first_date + i, "meal": [], "dayweek": dayweek}
+                    week_data["weekData"].append(meals)
+            # meals = week["the"]
+
+            month_data.append(week_data)
+
+            target_day = target_day + 7
+    result = {
+        "year": target_year,
+        "month": target_month,
+        "monthData": month_data
+    }
+
+    db.session.add(Meals(schoolCode=school_code, schoolName=school_name, year=target_year, month=target_month,
+                         meals=result,
+                         insertDate=datetime.datetime.now()))
+
+    db.session.commit()
+
+    print("insert end")

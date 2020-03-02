@@ -44,6 +44,35 @@ export const blogSearch = params => {
 };
 
 
+
+export const getSchoolByCode = params => {
+    console.log()
+    return Kakao.get(`/schools/code/${params}`)
+        .then((response) => {
+
+            return response;
+        })
+        .catch((error) => {
+            // Error 😨
+            if (error.response) {
+
+                return error.response
+
+
+            } else if (error.request) {
+
+                console.log(error.request);
+            } else {
+
+                console.log('Error', error.message);
+            }
+        });
+    ;
+
+};
+
+
+
 export const getMeal = params => {
     console.log(`/meals/${params.schoolCode}/day/${params.date}`)
     return Kakao.get(`/meals/${params.schoolCode}/day/${params.date}`)
