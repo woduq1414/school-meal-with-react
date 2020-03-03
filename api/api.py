@@ -476,8 +476,10 @@ def insert_meals_db(school_code, target_year, target_month):
                 meals=result, ukey=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
                 insertDate=datetime.datetime.now())
     db.session.add(row)
-
-    db.session.commit()
+    try:
+        db.session.commit()
+    except:
+        pass
 
     print("insert end")
     return row
