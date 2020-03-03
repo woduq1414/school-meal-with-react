@@ -1,6 +1,6 @@
 import sys
 from api.api import GetMealByMonthFromNeis, GetMealByWeekWithDetailFromNeis, GetMealByDayWithDetailFromNeis, \
-    SearchSchoolName, DB, GetSchoolNameWithSchoolCode
+    SearchSchoolName, DB, GetSchoolNameWithSchoolCode, GetMealStat
 
 from api.api import app, api, db
 
@@ -24,6 +24,7 @@ api.add_resource(GetSchoolNameWithSchoolCode, '/api/schools/code/<school_code>')
 api.add_resource(GetMealByMonthFromNeis, '/api/meals/<school_code>/month/<target_date>')
 api.add_resource(GetMealByWeekWithDetailFromNeis, '/api/meals/<school_code>/week/<target_date>')
 api.add_resource(GetMealByDayWithDetailFromNeis, '/api/meals/<school_code>/day/<target_date>')
+api.add_resource(GetMealStat, '/api/meals/stat/<school_code>')
 api.add_resource(DB, '/api/db')
 
 

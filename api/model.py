@@ -31,6 +31,7 @@ class Meals(db.Model):
     year = db.Column(db.Integer, nullable=False)
     month = db.Column(db.Integer, nullable=False)
     meals = db.Column(db.JSON, nullable=False)
+    ukey = db.Column(db.String(50), unique=True)
     insertDate = db.Column(db.DateTime, nullable=False)
 
 

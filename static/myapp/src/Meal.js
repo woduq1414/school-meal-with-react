@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {getMeal, getSchoolByCode} from "./api";
+import {getMeal, getSchoolByCode, getMealDetailStat} from "./api";
 
 //import "./Meal.css";
 
@@ -9,6 +9,7 @@ import styled from "styled-components";
 import ShadowedButton from "./CustomCSS";
 
 import Menu from "./Menu";
+import MealDetailStat from "./MealDetailStat";
 import Details from "./Details";
 import Loading from "./Loading";
 import useDebounce from "./useDebounce";
@@ -107,11 +108,16 @@ const MealData = styled.div`
 width:80%
 `
 
+const MealStat = styled.div`
+width:80%
+`
+
 
 const Meal = (props) => {
 
     const {params} = props.match;
     const [schoolName, setSchoolName] = useState("학교를 불러오는 중..");
+
 
     const GetSchoolByCodeHandler = async (query) => {
 
@@ -126,7 +132,7 @@ const Meal = (props) => {
             }
             setSchoolName(data.schoolName)
         } else {
-             props.history.push(`/`);
+            props.history.push(`/`);
         }
 
 
@@ -142,12 +148,17 @@ const Meal = (props) => {
 
     useEffect(() => {
         GetSchoolByCodeHandler(params.schoolCode)
+        GetMealDetailStatHandler()
     }, []);
 
 
     const [meals, setMeals] = useState([]);
 
     const [isLoading, setIsLoading] = useState(true);
+
+    const [detailStat, setDetailStat] = useState();
+
+
     const debouncedDate = useDebounce(date, 250);
 
 
@@ -185,6 +196,11 @@ const Meal = (props) => {
         setDate(temp)
     }
 
+    const moveDate = (date) => {
+        setDate(date)
+    }
+
+
     const GetMealHttpHandler = async (query) => {
 
         console.log("getMealHttp")
@@ -210,6 +226,46 @@ const Meal = (props) => {
             setMeals(data);
         } else {
             setMeals([])
+        }
+
+
+    };
+
+    const GetMealDetailStatHandler = async () => {
+
+        function pad(n, width) {
+            n = n + '';
+            return n.length >= width ? n : new Array(width - n.length + 1).join('0') + n;
+        }
+
+        let now = new Date()
+        let year = now.getFullYear()
+        let month = now.getMonth() + 1
+
+        let startDate, lastDate
+        if (month == 1) {
+            lastDate = String(year - 1)+ "12"
+            startDate = String(year - 1) + "01"
+        } else {
+            lastDate = String(year)+String(pad(month - 1, 2))
+            startDate = String(year - 1)+String(pad(month,2))
+        }
+
+        let query = {
+            schoolCode: params.schoolCode,
+            startDate: startDate,
+            lastDate: lastDate
+        }
+        console.log("CCCCC", query)
+
+        const response = await getMealDetailStat(query);
+        console.log(response)
+        if (response.status !== 404) {
+            let data = response.data
+            console.log("@@@@@@@@@@@@@@2", data)
+            setDetailStat(data.data)
+        } else {
+            // props.history.push(`/`);
         }
 
 
@@ -282,6 +338,14 @@ const Meal = (props) => {
 
             </MealData>
 
+            <br/>
+
+            <MealStat>
+                <MealDetailStat
+                    data={detailStat}
+                    moveDate={moveDate}
+                />
+            </MealStat>
 
         </Container>
     );

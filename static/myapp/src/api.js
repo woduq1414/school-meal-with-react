@@ -98,3 +98,30 @@ export const getMeal = params => {
     ;
 
 };
+
+
+export const getMealDetailStat = params => {
+    console.log("SDFFFFFFFFFFFFFFFFFFF")
+    return Kakao.get(`/meals/stat/${params.schoolCode}?startDate=${params.startDate}&lastDate=${params.lastDate}`)
+        .then((response) => {
+
+            return response;
+        })
+        .catch((error) => {
+            // Error 😨
+            if (error.response) {
+
+                return error.response
+
+
+            } else if (error.request) {
+
+                console.log(error.request);
+            } else {
+
+                console.log('Error', error.message);
+            }
+        });
+    ;
+
+};

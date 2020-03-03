@@ -53,6 +53,7 @@
     "react-rte": "^0.16.1",
     "react-select": "^1.2.1",
     "react-spinners": "^0.8.0",
+    "react-tabs": "^3.1.0",
     "react-tagsinput": "^3.19.0",
     "redux": "^3",
     "redux-thunk": "^2.2.0",

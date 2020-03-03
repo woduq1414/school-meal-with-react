@@ -276,17 +276,15 @@ class GetMealByWeekWithDetailFromNeis(Resource):
 class GetMealByDayWithDetailFromNeis(Resource):
     def get(self, school_code, target_date):
 
+        if not target_date.isdecimal():
+            return
+
+
         target_year = int(target_date[0:4])
         target_month = int(target_date[4:6])
         target_day = int(target_date[6:8])
         row = Meals.query.filter_by(year=target_year, month=target_month, schoolCode=school_code).first()
         if row is not None:
-            # result = {
-            #     'result': {
-            #         "status": data["result"]['status']
-            #     },
-            #     "data": meals
-            # }
             month_data = row.meals["monthData"]
             for weeks in month_data:
                 for day_data in weeks["weekData"]:
@@ -321,7 +319,8 @@ class GetMealByDayWithDetailFromNeis(Resource):
             except:
                 now = datetime.datetime.now()
                 if now.year > int(target_year) or (now.year == int(target_year) and now.month > int(target_month)):
-                    thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2), target=insert_meals_db,
+                    thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
+                                    target=insert_meals_db,
                                     kwargs={'school_code': school_code, 'target_year': target_year,
                                             'target_month': target_month})
                     thread.start()
@@ -356,7 +355,8 @@ class GetMealByDayWithDetailFromNeis(Resource):
                 "d": False
             }
 
-            thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2), target=insert_meals_db,
+            thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
+                            target=insert_meals_db,
                             kwargs={'school_code': school_code, 'target_year': target_year,
                                     'target_month': target_month})
             thread.start()
@@ -365,18 +365,24 @@ class GetMealByDayWithDetailFromNeis(Resource):
 
 
 def insert_meals_db(school_code, target_year, target_month):
+
+    # if not target_month.isdecimal() or target_year.isdecimal():
+    #     return
+
+
     running_threads = threading.enumerate()
     c = 0
     for thread in running_threads:
-        print(thread.getName())
+
         if thread.getName() == school_code + str(target_year).zfill(2) + str(target_month).zfill(2):
             c = c + 1
 
     if c >= 2:
         return
 
-    if Meals.query.filter_by(schoolCode=school_code, year=target_year, month=target_month).count() >= 1:
-        return
+    row = Meals.query.filter_by(schoolCode=school_code, year=target_year, month=target_month).first()
+    if row is not None:
+        return row
 
     school = Schools.query.filter_by(schoolCode=school_code).first()
     school_name = ""
@@ -466,10 +472,128 @@ def insert_meals_db(school_code, target_year, target_month):
         "monthData": month_data
     }
 
-    db.session.add(Meals(schoolCode=school_code, schoolName=school_name, year=target_year, month=target_month,
-                         meals=result,
-                         insertDate=datetime.datetime.now()))
+    row = Meals(schoolCode=school_code, schoolName=school_name, year=target_year, month=target_month,
+                meals=result, ukey=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
+                insertDate=datetime.datetime.now())
+    db.session.add(row)
 
     db.session.commit()
 
     print("insert end")
+    return row
+
+
+class GetMealStat(Resource):
+    def get(self, school_code):
+
+        parser = reqparse.RequestParser()
+
+        parser.add_argument('startDate', type=str)
+        parser.add_argument('lastDate', type=str)
+        args = parser.parse_args()
+
+        start_date = args["startDate"]
+        last_date = args["lastDate"]
+
+        if not start_date.isdecimal() or not last_date.isdecimal():
+            return
+
+
+        start_year, start_month = int(start_date[0:4]), int(start_date[4:6])
+        last_year, last_month = int(last_date[0:4]), int(last_date[4:6])
+
+        now = datetime.datetime.now()
+        if last_year > now.year or (last_year == now.year and last_month >= now.month):
+            if now.month != 1:
+                last_month = now.month - 1
+                last_year = now.year
+            else:
+                last_month = 12
+                last_year = now.year - 1
+
+        target_year, target_month = start_year, start_month
+
+        # threads = []
+        # while target_year < last_year or (target_year == last_year and target_month <= last_month):
+        #
+        #     print(target_year, target_month)
+        #     thread = Thread(target=insert_meals_db, kwargs={'school_code': school_code, 'target_month': target_month,
+        #                                                'target_year': target_year}, name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2))
+        #     thread.start()
+        #     threads.append(thread)
+        #     if target_month == 12:
+        #         target_month = 1
+        #         target_year = target_year + 1
+        #     else:
+        #         target_month = target_month + 1
+        #
+        # for thread in threads:
+        #     thread.join()
+
+        rows = []
+
+        while target_year < last_year or (target_year == last_year and target_month <= last_month):
+
+            print(target_year, target_month)
+            row = insert_meals_db(school_code, target_year, target_month)
+            rows.append(row)
+            if target_month == 12:
+                target_month = 1
+                target_year = target_year + 1
+            else:
+                target_month = target_month + 1
+
+        months = [row.meals for row in rows]
+        print(months)
+        details = {}
+
+        for month in months:
+            target_year = month["year"]
+            target_month = month["month"]
+            month_data = month["monthData"]
+            for week in month_data:
+
+                week_data = week["weekData"]
+
+
+
+                for day_data in week_data:
+                    target_date = str(target_year).zfill(4) + str(target_month).zfill(2) + str(day_data["day"]).zfill(
+                        2)
+                    if "detail" in day_data:
+                        for detailName, detailValue in day_data["detail"].items():
+                            if detailName in details:
+                                details[detailName][target_date] = detailValue
+                            else:
+                                details[detailName] = {}
+                                details[detailName][target_date] = detailValue
+
+
+        detail_stat = {}
+
+        for detail_name in details:
+            detail_stat[detail_name] = {}
+            detail_stat[detail_name]["max"] = max_dict(details[detail_name])
+            detail_stat[detail_name]["min"] = min_dict(details[detail_name])
+            detail_stat[detail_name]["average"] = average_dict(details[detail_name])
+        return {
+            'result': {
+                "status": "success"
+            },
+            "data": detail_stat
+
+        }
+
+
+
+def max_dict(dict):
+    print(dict)
+    max_key = max(dict, key=lambda k: dict[k])
+    return {"date" : max_key, "value" : dict[max_key]}
+
+def min_dict(dict):
+    min_key = min(dict, key=lambda k: dict[k])
+    return {"date" : min_key, "value" : dict[min_key]}
+
+def average_dict(dict):
+    return sum(value for key, value in dict.items()) / len(dict)
