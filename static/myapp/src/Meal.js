@@ -244,11 +244,11 @@ const Meal = (props) => {
 
         let startDate, lastDate
         if (month == 1) {
-            lastDate = String(year - 1)+ "12"
+            lastDate = String(year - 1) + "12"
             startDate = String(year - 1) + "01"
         } else {
-            lastDate = String(year)+String(pad(month - 1, 2))
-            startDate = String(year - 1)+String(pad(month,2))
+            lastDate = String(year) + String(pad(month - 1, 2))
+            startDate = String(year - 1) + String(pad(month, 2))
         }
 
         let query = {
@@ -258,14 +258,23 @@ const Meal = (props) => {
         }
         console.log("CCCCC", query)
 
-        const response = await getMealDetailStat(query);
-        console.log("response", response)
-        if (response.status !== 404) {
-            let data = response.data
-            console.log("@@@@@@@@@@@@@@2", data)
-            setDetailStat(data.data)
-        } else {
-            // props.history.push(`/`);
+        let running = 1;
+        while (running) {
+            const response = await getMealDetailStat(query);
+
+            if (response !== "timeout") {
+                if (response.status !== 404) {
+                    let data = response.data
+                    console.log("@@@@@@@@@@@@@@2", data)
+                    setDetailStat(data.data)
+
+
+                } else {
+
+                }
+                running = 0
+            }
+            console.log("response", response)
         }
 
 

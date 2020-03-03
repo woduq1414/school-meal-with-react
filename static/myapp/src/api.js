@@ -117,6 +117,8 @@ export const getMealDetailStat = params => {
             } else if (error.request) {
 
                 console.log("request", error.request);
+
+                return "timeout"
             } else {
 
                 console.log('Error', error.message);
