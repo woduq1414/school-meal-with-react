@@ -90,7 +90,10 @@ const MealDetailStat = props => {
 
         )
     } else {
-        return <React.Fragment/>
+        return (<React.Fragment>
+            급식 정보를 불러와서 분석하는 중이에요! 시간이 조금 걸릴 수 있어요!
+        </React.Fragment>
+        )
     }
 
 };

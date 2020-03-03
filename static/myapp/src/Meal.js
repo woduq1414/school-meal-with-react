@@ -259,7 +259,7 @@ const Meal = (props) => {
         console.log("CCCCC", query)
 
         const response = await getMealDetailStat(query);
-        console.log(response)
+        console.log("response", response)
         if (response.status !== 404) {
             let data = response.data
             console.log("@@@@@@@@@@@@@@2", data)

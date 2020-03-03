@@ -116,7 +116,7 @@ export const getMealDetailStat = params => {
 
             } else if (error.request) {
 
-                console.log(error.request);
+                console.log("request", error.request);
             } else {
 
                 console.log('Error', error.message);
