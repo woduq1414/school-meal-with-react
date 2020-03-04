@@ -13,7 +13,7 @@ import axios from "axios";
 // };
 
 const Kakao = axios.create({
-    baseURL: (window.location.hostname == "127.0.0.1" ||  window.location.hostname == "localhost") ? "http://127.0.0.1:5000/api" : "https://school-meal-with-react.herokuapp.com/api", // 공통 요청 경로를 지정해준다.  process.env.baseURL ||
+    baseURL: (window.location.hostname == "127.0.0.1" || window.location.hostname == "localhost") ? "http://127.0.0.1:5000/api" : "https://school-meal-with-react.herokuapp.com/api", // 공통 요청 경로를 지정해준다.  process.env.baseURL ||
 });
 
 // search blog api
@@ -44,7 +44,6 @@ export const blogSearch = params => {
 };
 
 
-
 export const getSchoolByCode = params => {
     console.log()
     return Kakao.get(`/schools/code/${params}`)
@@ -70,7 +69,6 @@ export const getSchoolByCode = params => {
     ;
 
 };
-
 
 
 export const getMeal = params => {
@@ -102,7 +100,37 @@ export const getMeal = params => {
 
 export const getMealDetailStat = params => {
     console.log("SDFFFFFFFFFFFFFFFFFFF")
-    return Kakao.get(`/meals/stat/${params.schoolCode}?startDate=${params.startDate}&lastDate=${params.lastDate}`)
+    return Kakao.get(`/meals/stat/detail/${params.schoolCode}?startDate=${params.startDate}&lastDate=${params.lastDate}`)
+        .then((response) => {
+
+            return response;
+        })
+        .catch((error) => {
+            // Error 😨
+            if (error.response) {
+
+                return error.response
+
+
+            } else if (error.request) {
+
+                console.log("request", error.request);
+
+                return "timeout"
+            } else {
+
+                console.log('Error', error.message);
+            }
+        });
+    ;
+
+};
+
+
+export const getMealMenuStat = params => {
+    console.log("SDFFFFFFFFFFFFFFFFFFF")
+    return Kakao.get(`/meals/stat/menu/${params.schoolCode}/${btoa(encodeURIComponent(params.menu))
+    }?startDate=${params.startDate}&lastDate=${params.lastDate}`)
         .then((response) => {
 
             return response;

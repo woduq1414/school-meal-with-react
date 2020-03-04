@@ -16,7 +16,7 @@ const MenuName = styled.li`
 const Menu = props => {
 
     return (
-        <MenuName>
+        <MenuName onClick={props.onClick}>
             {props.menuName}
         </MenuName>
     )

@@ -9,7 +9,9 @@ import itertools
 import calendar
 from threading import Thread
 import threading
+import base64
 import asyncio
+
 
 app = Flask(__name__, static_url_path='', static_folder='../static', template_folder='../static')
 app.config['CELERY_BROKER_URL'] = "redis://localhost:6379"
@@ -569,6 +571,88 @@ class GetMealStat(Resource):
                 "status": "success"
             },
             "data": detail_stat
+
+        }
+
+
+class GetMealMenuStat(Resource):
+    def get(self, school_code, menu):
+        from urllib import parse
+        import collections
+
+        menu_name = parse.unquote(base64.b64decode(menu).decode('utf-8'))
+        print(school_code, menu_name)
+
+        parser = reqparse.RequestParser()
+
+        parser.add_argument('startDate', type=str)
+        parser.add_argument('lastDate', type=str)
+        args = parser.parse_args()
+
+        start_date = args["startDate"]
+        last_date = args["lastDate"]
+
+        if not start_date.isdecimal() or not last_date.isdecimal():
+            return
+
+        start_year, start_month = int(start_date[0:4]), int(start_date[4:6])
+        last_year, last_month = int(last_date[0:4]), int(last_date[4:6])
+
+        now = datetime.datetime.now()
+        if last_year > now.year or (last_year == now.year and last_month >= now.month):
+            if now.month != 1:
+                last_month = now.month - 1
+                last_year = now.year
+            else:
+                last_month = 12
+                last_year = now.year - 1
+
+        target_year, target_month = start_year, start_month
+
+        rows = []
+
+        while target_year < last_year or (target_year == last_year and target_month <= last_month):
+
+            print(target_year, target_month)
+            row = insert_meals_db(school_code, target_year, target_month)
+            rows.append(row)
+            if target_month == 12:
+                target_month = 1
+                target_year = target_year + 1
+            else:
+                target_month = target_month + 1
+
+        months = [row.meals for row in rows]
+        # print(months)
+
+        menus = []
+
+        for month in months:
+            target_year = month["year"]
+            target_month = month["month"]
+            month_data = month["monthData"]
+            for week in month_data:
+
+                week_data = week["weekData"]
+
+                for day_data in week_data:
+                    target_date = str(target_year).zfill(4) + str(target_month).zfill(2) + str(day_data["day"]).zfill(
+                        2)
+                    if day_data["meal"] is not None:
+                        for menu in day_data["meal"]:
+                            menus.append(menu)
+
+        menusCounter = collections.Counter(menus)
+        print(menu)
+        print(menusCounter)
+
+        menusCounter = sorted(menusCounter.items(), key=(lambda x: x[1]), reverse = True)
+
+        return {
+            'result': {
+                "status": "success"
+            },
+            "data": menusCounter
 
         }
 

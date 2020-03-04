@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {getMeal, getSchoolByCode, getMealDetailStat} from "./api";
+import {getMeal, getSchoolByCode, getMealDetailStat, getMealMenuStat} from "./api";
 
 //import "./Meal.css";
 
@@ -11,6 +11,8 @@ import ShadowedButton from "./CustomCSS";
 import Menu from "./Menu";
 import MealDetailStat from "./MealDetailStat";
 import Details from "./Details";
+import MealMenuStat from "./MealMenuStat";
+
 import Loading from "./Loading";
 import useDebounce from "./useDebounce";
 
@@ -118,6 +120,45 @@ const Meal = (props) => {
     const {params} = props.match;
     const [schoolName, setSchoolName] = useState("학교를 불러오는 중..");
 
+    const GetMealMenuStatHandler = async (menu) => {
+        function pad(n, width) {
+            n = n + '';
+            return n.length >= width ? n : new Array(width - n.length + 1).join('0') + n;
+        }
+
+        let now = new Date()
+        let year = now.getFullYear()
+        let month = now.getMonth() + 1
+
+        let startDate, lastDate
+        if (month == 1) {
+            lastDate = String(year - 1) + "12"
+            startDate = String(year - 1) + "01"
+        } else {
+            lastDate = String(year) + String(pad(month - 1, 2))
+            startDate = String(year - 1) + String(pad(month, 2))
+        }
+
+        let query = {
+            schoolCode: params.schoolCode,
+            startDate: startDate,
+            lastDate: lastDate,
+            menu: menu
+        }
+
+
+        const response = await getMealMenuStat(query);
+        console.log(response)
+        if (response.status !== 404) {
+            let data = response.data
+            console.log("1111111111!!", data)
+            setMenuStat(data.data)
+        } else {
+            props.history.push(`/`);
+        }
+
+
+    };
 
     const GetSchoolByCodeHandler = async (query) => {
 
@@ -157,7 +198,7 @@ const Meal = (props) => {
     const [isLoading, setIsLoading] = useState(true);
 
     const [detailStat, setDetailStat] = useState();
-
+    const [menuStat, setMenuStat] = useState();
 
     const debouncedDate = useDebounce(date, 250);
 
@@ -188,6 +229,7 @@ const Meal = (props) => {
         temp.setDate(temp.getDate() + parseInt(-1));
         temp = temp.toISOString().substring(0, 10);
         setDate(temp)
+
     }
     const nextDate = () => {
         let temp = new Date(date);
@@ -319,6 +361,7 @@ const Meal = (props) => {
 
                                 {meals.meal.map((menu, index) => (
                                     <Menu
+                                        onClick={detailStat && (() => GetMealMenuStatHandler(menu))}
                                         key={index}
                                         menuName={menu}
                                     />
@@ -346,6 +389,8 @@ const Meal = (props) => {
 
 
             </MealData>
+            <MealMenuStat data={menuStat}/>
+
 
             <br/>
 

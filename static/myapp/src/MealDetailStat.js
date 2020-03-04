@@ -38,6 +38,8 @@ const MealDetailStat = props => {
         return `${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}`
     }
 
+
+
     console.log(props.data)
     if (props.data) {
         return (
@@ -91,8 +93,8 @@ const MealDetailStat = props => {
         )
     } else {
         return (<React.Fragment>
-            급식 정보를 불러와서 분석하는 중이에요! 시간이 조금 걸릴 수 있어요!
-        </React.Fragment>
+                급식 정보를 불러와서 분석하는 중이에요! 시간이 조금 걸릴 수 있어요!
+            </React.Fragment>
         )
     }
 
