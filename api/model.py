@@ -27,7 +27,7 @@ class Meals(db.Model):
     __table_args__ = {'mysql_collate': 'utf8_general_ci'}
     seq = db.Column(db.Integer, primary_key=True, nullable=False)
     schoolCode = db.Column(db.String(15), nullable=False)
-    schoolName = db.Column(db.String(25), nullable=False)
+    schoolName = db.Column(db.String(25), nullable=True)
     year = db.Column(db.Integer, nullable=False)
     month = db.Column(db.Integer, nullable=False)
     meals = db.Column(db.JSON, nullable=False)

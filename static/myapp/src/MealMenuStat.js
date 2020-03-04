@@ -51,19 +51,27 @@ const MealMenuStat = props => {
 
 
     console.log(props.data)
+    let data = props.data
 
-
-    if (props.data) {
+    if (data) {
         return (
             <React.Fragment>
                 <h2>
                     지난 1년 간 급식 메뉴 통계
                 </h2>
+                <h3>
+                    {data.days}일의 급식들 중에..
+                </h3>
+                <ul style={{"height" : "200px", "overflow-y" : "scroll", "width" : "80%", "text-align" : "center"}}>
+
+
                 {
-                    Object.keys(props.data).map((key, index) => (
-                        <p>{props.data[key][0]} : {props.data[key][1]}</p>
+                    Object.keys(data.data).map((key, index) => (
+                        <li>{data.data[key][0]} : {data.data[key][1]}회</li>
                     ))
                 }
+
+                </ul>
             </React.Fragment>
 
         )
@@ -73,7 +81,7 @@ const MealMenuStat = props => {
                 <h2>
                     지난 1년 간 급식 메뉴 통계
                 </h2>
-                급식 메뉴를 클릭해보세요!
+                {/*급식 메뉴를 클릭해보세요!*/}
             </React.Fragment>
         )
     }

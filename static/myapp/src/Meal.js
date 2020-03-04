@@ -27,11 +27,11 @@ import useDebounce from "./useDebounce";
 
 const Container = styled.div`
   width: 100%;
-  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding-top: 20px;
+  margin-bottom : 30px;
 `
 
 const Menus = styled.ul`
@@ -152,7 +152,7 @@ const Meal = (props) => {
         if (response.status !== 404) {
             let data = response.data
             console.log("1111111111!!", data)
-            setMenuStat(data.data)
+            setMenuStat(data)
         } else {
             props.history.push(`/`);
         }
@@ -190,6 +190,7 @@ const Meal = (props) => {
     useEffect(() => {
         GetSchoolByCodeHandler(params.schoolCode)
         GetMealDetailStatHandler()
+        GetMealMenuStatHandler()
     }, []);
 
 

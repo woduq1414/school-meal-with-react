@@ -321,10 +321,11 @@ class GetMealByDayWithDetailFromNeis(Resource):
             except:
                 now = datetime.datetime.now()
                 if now.year > int(target_year) or (now.year == int(target_year) and now.month > int(target_month)):
+                    school = Schools.query.filter_by(schoolCode=school_code).first()
                     thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
                                     target=insert_meals_db,
                                     kwargs={'school_code': school_code, 'target_year': target_year,
-                                            'target_month': target_month})
+                                            'target_month': target_month, 'school_name' : school.schoolName})
                     thread.start()
 
                 return {"message": "학교를 찾을 수 없거나, 날짜가 잘못됨."}, 404
@@ -357,16 +358,17 @@ class GetMealByDayWithDetailFromNeis(Resource):
                 "d": False
             }
 
+            school = Schools.query.filter_by(schoolCode=school_code).first()
             thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
                             target=insert_meals_db,
                             kwargs={'school_code': school_code, 'target_year': target_year,
-                                    'target_month': target_month})
+                                    'target_month': target_month, 'school_name': school.schoolName})
             thread.start()
 
             return json.loads(json.dumps(result, indent=2))
 
 
-def insert_meals_db(school_code, target_year, target_month):
+def insert_meals_db(school_code, school_name, target_year, target_month, r):
 
     # if not target_month.isdecimal() or target_year.isdecimal():
     #     return
@@ -379,20 +381,9 @@ def insert_meals_db(school_code, target_year, target_month):
         if thread.getName() == school_code + str(target_year).zfill(2) + str(target_month).zfill(2):
             c = c + 1
 
-    if c >= 2:
-        return
 
 
-    row = Meals.query.filter_by(schoolCode=school_code, year=target_year, month=target_month).first()
-    if row is not None:
-        return row
 
-    school = Schools.query.filter_by(schoolCode=school_code).first()
-    school_name = ""
-    if school is None:
-        return
-    else:
-        school_name = school.schoolName
 
     with requests.Session() as s:
         first_page = s.get('https://stu.{}.kr/edusys.jsp?page=sts_m42310'.format(get_region_code(school_code)))
@@ -478,19 +469,115 @@ def insert_meals_db(school_code, target_year, target_month):
     row = Meals(schoolCode=school_code, schoolName=school_name, year=target_year, month=target_month,
                 meals=result, ukey=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
                 insertDate=datetime.datetime.now())
-    try:
-        db.session.add(row)
 
-        db.session.commit()
-    except:
-        db.session.rollback()
 
     print("insert end")
+    if c >= 2:
+        r["data"] = {"row" : row, "first" : False}
+        return
+
+    r["data"] = {"row" : row, "first" : True}
+
     return row
+
+
+def GetMealFromDB(school_code, start_date, last_date):
+    if not start_date.isdecimal() or not last_date.isdecimal():
+        return
+
+    start_year, start_month = int(start_date[0:4]), int(start_date[4:6])
+    last_year, last_month = int(last_date[0:4]), int(last_date[4:6])
+
+    now = datetime.datetime.now()
+    if last_year > now.year or (last_year == now.year and last_month >= now.month):
+        if now.month != 1:
+            last_month = now.month - 1
+            last_year = now.year
+        else:
+            last_month = 12
+            last_year = now.year - 1
+
+    target_year, target_month = start_year, start_month
+
+    rows = []
+    insert_rows = []
+
+    school = Schools.query.filter_by(schoolCode=school_code).first()
+    school_name = ""
+    if school is None:
+        print("SFDaaaaaaaa")
+        return {"message": "학교를 찾을 수 없습니다."}, 404
+    else:
+        school_name = school.schoolName
+
+    threads = []
+    results = []
+    while target_year < last_year or (target_year == last_year and target_month <= last_month):
+
+        print(target_year, target_month)
+
+        row = Meals.query.filter_by(schoolCode=school_code, year=target_year, month=target_month).first()
+        if row is None:
+            results.append({"data": ""})
+            thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
+                            target=insert_meals_db,
+                            kwargs={'school_code': school_code, 'target_year': target_year,
+                                    'target_month': target_month, 'school_name': school_name, 'r': results[-1]})
+            thread.start()
+            threads.append(thread)
+        else:
+            rows.append(row)
+        if target_month == 12:
+            target_month = 1
+            target_year = target_year + 1
+        else:
+            target_month = target_month + 1
+
+    for thread in threads:
+        thread.join()
+    print(results)
+
+    commit_rows = []
+    t = Meals.query.filter_by(schoolCode=school_code).with_entities(Meals.ukey).all()
+    t = list((itertools.chain.from_iterable(t)))  # flatten
+    print(t)
+    for result in results:
+
+        data = result["data"]
+
+        row = data["row"]
+        if data["first"] == False:
+
+            print("!!!", row)
+            if row is not None:
+                rows.append(row)
+        elif row and row.schoolCode + str(row.year).zfill(2) + str(row.month).zfill(2) not in t:
+
+            commit_rows.append(row)
+            rows.append(row)
+
+    # for commit_row in commit_rows:
+    #     try:
+    #         print("!")
+    #         db.session.add(commit_row)
+    #         db.session.commit()
+    #     except:
+    #         db.session.rollback()
+
+    db.session.add_all(commit_rows)
+    db.session.commit()
+
+
+
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", len(rows))
+
+    return rows
 
 
 class GetMealStat(Resource):
     def get(self, school_code):
+
+
 
         parser = reqparse.RequestParser()
 
@@ -501,37 +588,11 @@ class GetMealStat(Resource):
         start_date = args["startDate"]
         last_date = args["lastDate"]
 
-        if not start_date.isdecimal() or not last_date.isdecimal():
-            return
+        rows = GetMealFromDB(school_code, start_date, last_date)
 
 
-        start_year, start_month = int(start_date[0:4]), int(start_date[4:6])
-        last_year, last_month = int(last_date[0:4]), int(last_date[4:6])
-
-        now = datetime.datetime.now()
-        if last_year > now.year or (last_year == now.year and last_month >= now.month):
-            if now.month != 1:
-                last_month = now.month - 1
-                last_year = now.year
-            else:
-                last_month = 12
-                last_year = now.year - 1
-
-        target_year, target_month = start_year, start_month
 
 
-        rows = []
-
-        while target_year < last_year or (target_year == last_year and target_month <= last_month):
-
-            print(target_year, target_month)
-            row = insert_meals_db(school_code, target_year, target_month)
-            rows.append(row)
-            if target_month == 12:
-                target_month = 1
-                target_year = target_year + 1
-            else:
-                target_month = target_month + 1
 
         months = [row.meals for row in rows]
         print(months)
@@ -592,41 +653,14 @@ class GetMealMenuStat(Resource):
         start_date = args["startDate"]
         last_date = args["lastDate"]
 
-        if not start_date.isdecimal() or not last_date.isdecimal():
-            return
+        rows = GetMealFromDB(school_code, start_date, last_date)
 
-        start_year, start_month = int(start_date[0:4]), int(start_date[4:6])
-        last_year, last_month = int(last_date[0:4]), int(last_date[4:6])
-
-        now = datetime.datetime.now()
-        if last_year > now.year or (last_year == now.year and last_month >= now.month):
-            if now.month != 1:
-                last_month = now.month - 1
-                last_year = now.year
-            else:
-                last_month = 12
-                last_year = now.year - 1
-
-        target_year, target_month = start_year, start_month
-
-        rows = []
-
-        while target_year < last_year or (target_year == last_year and target_month <= last_month):
-
-            print(target_year, target_month)
-            row = insert_meals_db(school_code, target_year, target_month)
-            rows.append(row)
-            if target_month == 12:
-                target_month = 1
-                target_year = target_year + 1
-            else:
-                target_month = target_month + 1
 
         months = [row.meals for row in rows]
         # print(months)
 
         menus = []
-
+        c = 0
         for month in months:
             target_year = month["year"]
             target_month = month["month"]
@@ -639,6 +673,7 @@ class GetMealMenuStat(Resource):
                     target_date = str(target_year).zfill(4) + str(target_month).zfill(2) + str(day_data["day"]).zfill(
                         2)
                     if day_data["meal"] is not None:
+                        c = c + 1
                         for menu in day_data["meal"]:
                             menus.append(menu)
 
@@ -652,8 +687,8 @@ class GetMealMenuStat(Resource):
             'result': {
                 "status": "success"
             },
-            "data": menusCounter
-
+            "data": menusCounter,
+            "days" : c
         }
 
 
