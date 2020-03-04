@@ -380,6 +380,7 @@ def insert_meals_db(school_code, target_year, target_month):
     if c >= 2:
         return
 
+
     row = Meals.query.filter_by(schoolCode=school_code, year=target_year, month=target_month).first()
     if row is not None:
         return row
@@ -475,11 +476,12 @@ def insert_meals_db(school_code, target_year, target_month):
     row = Meals(schoolCode=school_code, schoolName=school_name, year=target_year, month=target_month,
                 meals=result, ukey=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
                 insertDate=datetime.datetime.now())
-    db.session.add(row)
     try:
+        db.session.add(row)
+
         db.session.commit()
     except:
-        pass
+        db.session.rollback()
 
     print("insert end")
     return row
@@ -515,22 +517,6 @@ class GetMealStat(Resource):
 
         target_year, target_month = start_year, start_month
 
-        # threads = []
-        # while target_year < last_year or (target_year == last_year and target_month <= last_month):
-        #
-        #     print(target_year, target_month)
-        #     thread = Thread(target=insert_meals_db, kwargs={'school_code': school_code, 'target_month': target_month,
-        #                                                'target_year': target_year}, name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2))
-        #     thread.start()
-        #     threads.append(thread)
-        #     if target_month == 12:
-        #         target_month = 1
-        #         target_year = target_year + 1
-        #     else:
-        #         target_month = target_month + 1
-        #
-        # for thread in threads:
-        #     thread.join()
 
         rows = []
 
