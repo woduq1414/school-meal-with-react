@@ -134,7 +134,7 @@ class SearchSchoolName(Resource):
                         type = "고등"
                     else:
                         type = "특수"
-                        
+
                     result.append({
                         "schoolType": type,
                         "schoolRegion": school['LCTN_NM'],
@@ -345,11 +345,11 @@ class GetMealByDayWithDetailFromNeis(Resource):
                 now = datetime.datetime.now()
                 if now.year > int(target_year) or (now.year == int(target_year) and now.month > int(target_month)):
                     school = Schools.query.filter_by(schoolCode=school_code).first()
-                    thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
-                                    target=insert_meals_db,
-                                    kwargs={'school_code': school_code, 'target_year': target_year,
-                                            'target_month': target_month, 'school_name': school.schoolName})
-                    thread.start()
+                    # thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
+                    #                 target=insert_meals_db,
+                    #                 kwargs={'school_code': school_code, 'target_year': target_year,
+                    #                         'target_month': target_month, 'school_name': school.schoolName})
+                    # thread.start()
 
                 return {"message": "학교를 찾을 수 없거나, 날짜가 잘못됨."}, 404
             # return data
@@ -382,11 +382,11 @@ class GetMealByDayWithDetailFromNeis(Resource):
             }
 
             school = Schools.query.filter_by(schoolCode=school_code).first()
-            thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
-                            target=insert_meals_db,
-                            kwargs={'school_code': school_code, 'target_year': target_year,
-                                    'target_month': target_month, 'school_name': school.schoolName})
-            thread.start()
+            # thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
+            #                 target=insert_meals_db,
+            #                 kwargs={'school_code': school_code, 'target_year': target_year,
+            #                         'target_month': target_month, 'school_name': school.schoolName})
+            # thread.start()
 
             return json.loads(json.dumps(result, indent=2))
 
