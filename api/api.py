@@ -12,7 +12,6 @@ import threading
 import base64
 import asyncio
 
-
 app = Flask(__name__, static_url_path='', static_folder='../static', template_folder='../static')
 app.config['CELERY_BROKER_URL'] = "redis://localhost:6379"
 
@@ -87,9 +86,13 @@ class SearchSchoolName(Resource):
     def get(self, school_name):
         parser = reqparse.RequestParser()
         parser.add_argument('limit', type=int)
+        parser.add_argument('now', type=str)
+        parser.add_argument('schoolCode', type=str)
         args = parser.parse_args()
 
         limit = args["limit"]
+        now = args["now"]
+        school_code = args["schoolCode"]
 
         if limit is None:
             limit = 30
@@ -139,27 +142,45 @@ class SearchSchoolName(Resource):
 
             if result:
 
-                def InsertSchoolsDB(result, limit):
+                def InsertSchoolsDB(result, limit, school_code, thread):
                     now = datetime.datetime.now()
                     # result[0]['insertDate'] = str(now)
                     result = result[:limit]
-                    schools = list()
 
-                    schoolCodes = Schools.query.with_entities(Schools.schoolCode).all()
-                    schoolCodes = list((itertools.chain.from_iterable(schoolCodes)))  # flatten
+                    if thread is True:
+                        schools = list()
 
-                    for school in result:
+                        schoolCodes = Schools.query.with_entities(Schools.schoolCode).all()
+                        schoolCodes = list((itertools.chain.from_iterable(schoolCodes)))  # flatten
 
-                        if school["schoolCode"] not in schoolCodes:
-                            schools.append(Schools(**school, insertDate=now))
+                        for school in result:
 
-                        print(school)
-                    db.session.add_all(schools)
+                            if school["schoolCode"] not in schoolCodes:
+                                schools.append(Schools(**school, insertDate=now))
 
-                    db.session.commit()
+                            print(school)
+                        db.session.add_all(schools)
 
-                thread = Thread(target=InsertSchoolsDB, kwargs={'result': result, 'limit': limit})
-                thread.start()
+                        db.session.commit()
+
+                    else:
+
+                        for school in result:
+                            if school["schoolCode"] == school_code:
+                                try:
+                                    db.session.add(Schools(**school, insertDate=now))
+                                    db.session.commit()
+                                except:
+                                    pass
+                                break
+
+                if now is None and school_code is None:
+                    thread = Thread(target=InsertSchoolsDB,
+                                    kwargs={'result': result, 'limit': limit, 'school_code': None, 'thread': True})
+                    thread.start()
+                else:
+                    print("ghfhfhfhfhf")
+                    InsertSchoolsDB(result, limit, school_code, False)
 
                 return result[:limit], 200
             else:
@@ -281,7 +302,6 @@ class GetMealByDayWithDetailFromNeis(Resource):
         if not target_date.isdecimal():
             return
 
-
         target_year = int(target_date[0:4])
         target_month = int(target_date[4:6])
         target_day = int(target_date[6:8])
@@ -325,7 +345,7 @@ class GetMealByDayWithDetailFromNeis(Resource):
                     thread = Thread(name=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
                                     target=insert_meals_db,
                                     kwargs={'school_code': school_code, 'target_year': target_year,
-                                            'target_month': target_month, 'school_name' : school.schoolName})
+                                            'target_month': target_month, 'school_name': school.schoolName})
                     thread.start()
 
                 return {"message": "학교를 찾을 수 없거나, 날짜가 잘못됨."}, 404
@@ -369,10 +389,8 @@ class GetMealByDayWithDetailFromNeis(Resource):
 
 
 def insert_meals_db(school_code, school_name, target_year, target_month, r):
-
     # if not target_month.isdecimal() or target_year.isdecimal():
     #     return
-
 
     running_threads = threading.enumerate()
     c = 0
@@ -380,10 +398,6 @@ def insert_meals_db(school_code, school_name, target_year, target_month, r):
 
         if thread.getName() == school_code + str(target_year).zfill(2) + str(target_month).zfill(2):
             c = c + 1
-
-
-
-
 
     with requests.Session() as s:
         first_page = s.get('https://stu.{}.kr/edusys.jsp?page=sts_m42310'.format(get_region_code(school_code)))
@@ -470,13 +484,12 @@ def insert_meals_db(school_code, school_name, target_year, target_month, r):
                 meals=result, ukey=school_code + str(target_year).zfill(2) + str(target_month).zfill(2),
                 insertDate=datetime.datetime.now())
 
-
     print("insert end")
     if c >= 2:
-        r["data"] = {"row" : row, "first" : False}
+        r["data"] = {"row": row, "first": False}
         return
 
-    r["data"] = {"row" : row, "first" : True}
+    r["data"] = {"row": row, "first": True}
 
     return row
 
@@ -554,7 +567,6 @@ def GetMealFromDB(school_code, start_date, last_date):
             row = Meals.query.filter_by(schoolCode=school_code, year=row.year, month=row.month).first()
             rows.append(row)
 
-
     def commit_thread(commit_rows):
         for commit_row in commit_rows:
             try:
@@ -564,12 +576,10 @@ def GetMealFromDB(school_code, start_date, last_date):
             except:
                 db.session.rollback()
 
-    thread = Thread(target=commit_thread, kwargs={"commit_rows":commit_rows})
+    thread = Thread(target=commit_thread, kwargs={"commit_rows": commit_rows})
     thread.start()
     # db.session.add_all(commit_rows)
     # db.session.commit()
-
-
 
     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", len(rows))
 
@@ -578,8 +588,6 @@ def GetMealFromDB(school_code, start_date, last_date):
 
 class GetMealStat(Resource):
     def get(self, school_code):
-
-
 
         parser = reqparse.RequestParser()
 
@@ -591,10 +599,6 @@ class GetMealStat(Resource):
         last_date = args["lastDate"]
 
         rows = GetMealFromDB(school_code, start_date, last_date)
-
-
-
-
 
         months = [row.meals for row in rows]
         print(months)
@@ -608,8 +612,6 @@ class GetMealStat(Resource):
 
                 week_data = week["weekData"]
 
-
-
                 for day_data in week_data:
                     target_date = str(target_year).zfill(4) + str(target_month).zfill(2) + str(day_data["day"]).zfill(
                         2)
@@ -620,7 +622,6 @@ class GetMealStat(Resource):
                             else:
                                 details[detailName] = {}
                                 details[detailName][target_date] = detailValue
-
 
         detail_stat = {}
 
@@ -657,7 +658,6 @@ class GetMealMenuStat(Resource):
 
         rows = GetMealFromDB(school_code, start_date, last_date)
 
-
         months = [row.meals for row in rows]
         # print(months)
 
@@ -683,26 +683,27 @@ class GetMealMenuStat(Resource):
         print(menu)
         print(menusCounter)
 
-        menusCounter = sorted(menusCounter.items(), key=(lambda x: x[1]), reverse = True)
+        menusCounter = sorted(menusCounter.items(), key=(lambda x: x[1]), reverse=True)
 
         return {
             'result': {
                 "status": "success"
             },
             "data": menusCounter,
-            "days" : c
+            "days": c
         }
-
 
 
 def max_dict(dict):
     print(dict)
     max_key = max(dict, key=lambda k: dict[k])
-    return {"date" : max_key, "value" : dict[max_key]}
+    return {"date": max_key, "value": dict[max_key]}
+
 
 def min_dict(dict):
     min_key = min(dict, key=lambda k: dict[k])
-    return {"date" : min_key, "value" : dict[min_key]}
+    return {"date": min_key, "value": dict[min_key]}
+
 
 def average_dict(dict):
     return sum(value for key, value in dict.items()) / len(dict)

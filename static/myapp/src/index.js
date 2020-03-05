@@ -4,6 +4,8 @@ import "./index.css";
 import Client from "./Client";
 import * as serviceWorker from "./serviceWorker";
 
+
+
 ReactDOM.render(<Client />, document.getElementById("root"));
 
 // If you want your app to work offline and load faster, you can change
