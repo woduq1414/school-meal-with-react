@@ -546,7 +546,7 @@ def GetMealFromDB(school_code, start_date, last_date):
         data = result["data"]
 
         row = data["row"]
-        if data["first"] == False:
+        if False and data["first"] == False:
 
             print("!!!", row)
             if row is not None:
@@ -556,16 +556,19 @@ def GetMealFromDB(school_code, start_date, last_date):
             commit_rows.append(row)
             rows.append(row)
 
-    # for commit_row in commit_rows:
-    #     try:
-    #         print("!")
-    #         db.session.add(commit_row)
-    #         db.session.commit()
-    #     except:
-    #         db.session.rollback()
+    def commit_thread(commit_rows):
+        for commit_row in commit_rows:
+            try:
+                print("!")
+                db.session.add(commit_row)
+                db.session.commit()
+            except:
+                db.session.rollback()
 
-    db.session.add_all(commit_rows)
-    db.session.commit()
+    thread = Thread(target=commit_thread, kwargs={"commit_rows":commit_rows})
+    thread.start()
+    # db.session.add_all(commit_rows)
+    # db.session.commit()
 
 
 
