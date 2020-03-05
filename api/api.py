@@ -132,6 +132,9 @@ class SearchSchoolName(Resource):
                         type = "중등"
                     elif school_type == "schoolList04":
                         type = "고등"
+                    else:
+                        type = "특수"
+                        
                     result.append({
                         "schoolType": type,
                         "schoolRegion": school['LCTN_NM'],
