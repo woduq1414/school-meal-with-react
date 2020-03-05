@@ -51,7 +51,8 @@ http://127.0.0.1:5000/api/meals/J100000855/day/20190908
 
 
 def remove_allergy(str):
-    return re.sub("[0-9]*\.", '', str)
+    temp = re.sub("\([^)]*\)|[0-9]*\.", '', str)
+    return re.sub("[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]+$", "", temp)
 
 
 def get_region_code(school_code):
