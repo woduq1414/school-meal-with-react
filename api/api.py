@@ -301,7 +301,9 @@ class GetMealByWeekWithDetailFromNeis(Resource):
 
 class GetMealByDayWithDetailFromNeis(Resource):
     def get(self, school_code, target_date):
-
+        target_school = Schools.query.filter_by(schoolCode=school_code).first()
+        if target_school is None:
+            return {"message" : "학교를 찾을 수 없음"}, 404
         if not target_date.isdecimal():
             return
 
@@ -498,6 +500,10 @@ def insert_meals_db(school_code, school_name, target_year, target_month, r):
 
 
 def GetMealFromDB(school_code, start_date, last_date):
+
+    target_school = Schools.query.filter_by(schoolCode=school_code).first()
+    if target_school is None:
+        return
     if not start_date.isdecimal() or not last_date.isdecimal():
         return
 
@@ -602,6 +608,8 @@ class GetMealStat(Resource):
         last_date = args["lastDate"]
 
         rows = GetMealFromDB(school_code, start_date, last_date)
+        if rows is None:
+            return {"message" : "학교 코드가 잘못됐거나 뭔가 오류"}, 404
 
         months = [row.meals for row in rows]
         print(months)
@@ -660,7 +668,8 @@ class GetMealMenuStat(Resource):
         last_date = args["lastDate"]
 
         rows = GetMealFromDB(school_code, start_date, last_date)
-
+        if rows is None:
+            return {"message" : "학교 코드가 잘못됐거나 뭔가 오류"}, 404
         months = [row.meals for row in rows]
         # print(months)
 
