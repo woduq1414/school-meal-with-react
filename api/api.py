@@ -546,15 +546,14 @@ def GetMealFromDB(school_code, start_date, last_date):
         data = result["data"]
 
         row = data["row"]
-        if False and data["first"] == False:
-
-            print("!!!", row)
-            if row is not None:
-                rows.append(row)
-        elif row and row.schoolCode + str(row.year).zfill(2) + str(row.month).zfill(2) not in t:
+        if row and row.schoolCode + str(row.year).zfill(2) + str(row.month).zfill(2) not in t:
 
             commit_rows.append(row)
             rows.append(row)
+        else:
+            row = Meals.query.filter_by(schoolCode=school_code, year=row.year, month=row.month).first()
+            rows.append(row)
+
 
     def commit_thread(commit_rows):
         for commit_row in commit_rows:
