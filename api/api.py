@@ -10,22 +10,17 @@ import calendar
 from threading import Thread
 import threading
 import base64
+import asyncio
+
+app = Flask(__name__, static_url_path='', static_folder='../static', template_folder='../static')
 
 
-# from api.db import *
-# from . import db
-
-
-
-
+api = Api(app)
 
 
 
+from api.db import *
 from api.model import *
-
-
-
-
 
 """
 http://127.0.0.1:5000/schools/디지털
@@ -545,7 +540,14 @@ def GetMealFromDB(school_code, start_date, last_date):
             row = Meals.query.filter_by(schoolCode=school_code, year=row.year, month=row.month).first()
             rows.append(row)
 
-
+    def commit_thread(commit_rows):
+        for commit_row in commit_rows:
+            try:
+                print("!")
+                db.session.add(commit_row)
+                db.session.commit()
+            except:
+                db.session.rollback()
 
     thread = Thread(target=commit_thread, kwargs={"commit_rows": commit_rows})
     thread.start()
@@ -555,15 +557,6 @@ def GetMealFromDB(school_code, start_date, last_date):
     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", len(rows))
 
     return rows
-
-def commit_thread(commit_rows):
-    for commit_row in commit_rows:
-        try:
-            print("!")
-            db.session.add(commit_row)
-            db.session.commit()
-        except:
-            db.session.rollback()
 
 
 class GetMealDetailStat(Resource):

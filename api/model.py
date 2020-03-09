@@ -1,7 +1,5 @@
-from .db import db
-# from flask_sqlalchemy import SQLAlchemy
-#
-# db = SQLAlchemy()
+from api.api import db
+
 
 class Board(db.Model):
     __table_args__ = {'mysql_collate': 'utf8_general_ci'}
@@ -46,5 +44,3 @@ class Schools(db.Model):
     schoolRegion = db.Column(db.String(10), nullable=False)
     schoolAddress = db.Column(db.String(40), nullable=False)
     insertDate = db.Column(db.DateTime, nullable=False)
-
-
