@@ -13,31 +13,11 @@ import base64
 import asyncio
 
 app = Flask(__name__, static_url_path='', static_folder='../static', template_folder='../static')
-app.config['CELERY_BROKER_URL'] = "redis://localhost:6379"
+
 
 api = Api(app)
 
-from celery import Celery
 
-
-def make_celery(app):
-    celery = Celery(app.import_name, backend="redis://localhost:6379",
-                    broker="redis://localhost:6379")
-    celery.conf.update(app.config)
-    TaskBase = celery.Task
-
-    class ContextTask(TaskBase):
-        abstract = True
-
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return TaskBase.__call__(self, *args, **kwargs)
-
-    celery.Task = ContextTask
-    return celery
-
-
-celery = make_celery(app)
 
 from api.db import *
 from api.model import *
@@ -52,7 +32,7 @@ http://127.0.0.1:5000/api/meals/J100000855/day/20190908
 
 def remove_allergy(str):
     temp = re.sub("\([^)]*\)|[0-9]*\.", '', str)
-    return re.sub("[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]+$", "", temp)
+    return re.sub("[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"A-Za-z]+$", "", temp)
 
 
 def get_region_code(school_code):
@@ -63,24 +43,7 @@ def get_region_code(school_code):
             "T": "jje.go"}[t]
 
 
-class DB(Resource):
-    def get(self):
-        # @celery.task()
-        # def add_together(a, b):
-        #     import time
-        #     time.sleep(5)
-        #     print(a + b)
-        # add_together(3,5)
 
-        def do_work(a, b):
-            # do something that takes a long time
-            import time
-            time.sleep(3)
-            print(a + b)
-
-        thread = Thread(target=do_work, kwargs={'a': 3, 'b': 5})
-        thread.start()
-        return "hello"
 
 
 class SearchSchoolName(Resource):
@@ -596,7 +559,7 @@ def GetMealFromDB(school_code, start_date, last_date):
     return rows
 
 
-class GetMealStat(Resource):
+class GetMealDetailStat(Resource):
     def get(self, school_code):
 
         parser = reqparse.RequestParser()
