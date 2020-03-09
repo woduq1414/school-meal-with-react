@@ -1,5 +1,5 @@
 # from flask_sqlalchemy import SQLAlchemy
-# from api import meal_api as app
+#
 #
 # import os
 # import subprocess
@@ -12,8 +12,3 @@
 #
 # app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # db = SQLAlchemy(app)
-
-
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
